@@ -115,8 +115,16 @@ int main(int argc, char **argv)
     bool ssl = false;
     const char *crt_file = NULL;
     struct umqtt_options options = {
-        .keep_alive = 12,
-        .client_id = "LIBUMQTT"
+        .keep_alive = 30,
+        .client_id = "libumqtt-Test",
+        .clean_session = true,
+        .username = "test",
+        .password = "123456"
+    };
+
+    struct umqtt_will will = {
+        .topic = "will",
+        .payload = "will test"
     };
 
     while ((opt = getopt(argc, argv, "h:p:nc:s")) != -1) {
@@ -162,7 +170,7 @@ int main(int argc, char **argv)
     cl->on_error = on_error;
     cl->on_close = on_close;
 
-    if (cl->connect(cl, &options, NULL) < 0) {
+    if (cl->connect(cl, &options, &will) < 0) {
         ULOG_ERR("connect failed\n");
         goto err;
     }

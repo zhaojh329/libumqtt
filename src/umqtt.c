@@ -398,7 +398,10 @@ static int umqtt_connect(struct umqtt_client *cl, struct umqtt_options *opts, st
         UMQTT_SET_BITS(flags, 1, 1);
 
     if (will) {
-        remlen += strlen(will->topic) + 2 + strlen(will->payload) + 2;
+        if (will->topic)
+            remlen += strlen(will->topic) + 2;
+        if (will->payload)
+            remlen += strlen(will->payload) + 2;
         UMQTT_SET_BITS(flags, 1, 2);
         UMQTT_SET_BITS(flags, will->qos, 3);
         UMQTT_SET_BITS(flags, will->retain, 5);
@@ -435,6 +438,17 @@ static int umqtt_connect(struct umqtt_client *cl, struct umqtt_options *opts, st
 
     UMQTT_PUT_U16(p, opts->keep_alive);
     UMQTT_PUT_STRING(p, strlen(opts->client_id), opts->client_id);
+
+    if (will) {
+        UMQTT_PUT_STRING(p, strlen(will->topic), will->topic);
+        UMQTT_PUT_STRING(p, strlen(will->payload), will->payload);
+    }
+
+    if (opts->username)
+        UMQTT_PUT_STRING(p, strlen(opts->username), opts->username);
+
+    if (opts->password)
+        UMQTT_PUT_STRING(p, strlen(opts->password), opts->password);
 
     ustream_write(cl->us, (const char *)buf, remlen + 2, false);
     free(buf);

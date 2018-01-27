@@ -23,8 +23,7 @@
 [mbedtls]: https://github.com/ARMmbed/mbedtls
 [CyaSSl(wolfssl)]: https://github.com/wolfSSL/wolfssl
 
-A Lightweight and fully asynchronous MQTT 3.1.1 client library written in C.
-Use [libubox] as its event backend. Support SSL.
+A Lightweight and fully asynchronous MQTT 3.1.1 client C library based on libubox for Embedded Linux.
 
 `Keep Watching for More Actions on This Space`
 

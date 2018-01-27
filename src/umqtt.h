@@ -50,6 +50,15 @@ enum umqtt_packet_type {
     UMQTT_DISCONNECT_PACKET
 };
 
+enum umqtt_return_code {
+    UMQTT_CONNECTION_ACCEPTED = 0,
+    UMQTT_UNACCEPTABLE_PROTOCOL = 1,
+    UMQTT_IDENTIFIER_REJECTED = 2,
+    UMQTT_SERVER_UNAVAILABLE = 3,
+    UMQTT_BAD_USERNAME_OR_PASSWORD = 4,
+    UMQTT_NOT_AUTHORIZED = 5
+};
+
 enum umqtt_error_code {
     UMQTT_ERROR_WRITE,
     UMQTT_ERROR_SSL,
@@ -86,8 +95,8 @@ struct umqtt_payload {
 struct umqtt_packet {
     uint8_t type;
     uint32_t remlen;
-    bool session_present;
-    uint8_t connect_code;
+    bool sp;    /*  Session Present */
+    enum umqtt_return_code return_code;
     uint16_t mid;
     uint8_t qos[10];
     char *topic;
@@ -132,7 +141,7 @@ struct umqtt_client {
     int (*publish)(struct umqtt_client *cl, const char *topic, const char *payload, uint8_t qos);
     void (*ping)(struct umqtt_client *cl);
     void (*disconnect)(struct umqtt_client *cl);
-    void (*on_conack)(struct umqtt_client *cl, uint8_t code);
+    void (*on_conack)(struct umqtt_client *cl, bool sp, enum umqtt_return_code code);
     void (*on_puback)(struct umqtt_client *cl, uint16_t mid);
     void (*on_pubrel)(struct umqtt_client *cl, uint16_t mid);
     void (*on_pubcomp)(struct umqtt_client *cl, uint16_t mid);

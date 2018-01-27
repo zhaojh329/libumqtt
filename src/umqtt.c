@@ -55,8 +55,8 @@ static void dispach_message(struct umqtt_client *cl)
     switch (pkt->type) {
     case UMQTT_CONNACK_PACKET:
         if (cl->on_conack)
-            cl->on_conack(cl, pkt->connect_code);
-        if (!pkt->connect_code)
+            cl->on_conack(cl, pkt->sp, pkt->return_code);
+        if (pkt->return_code == UMQTT_CONNECTION_ACCEPTED)
             uloop_timeout_set(&cl->ping_timer, UMQTT_PING_INTERVAL * 1000);
         break;
     case UMQTT_PUBACK_PACKET:
@@ -166,8 +166,8 @@ static void parse_variable_header(struct umqtt_client *cl, uint8_t *data, int le
     case UMQTT_CONNACK_PACKET:
         if (len < 2)
             return;
-        pkt->session_present = data[0] & 0x01;
-        pkt->connect_code = data[1];
+        pkt->sp = data[0] & 0x01;   /*  Session Present */
+        pkt->return_code = data[1];
         cl->ps = PARSE_STATE_DONE;
         parsed = 2;
         break;

@@ -69,9 +69,9 @@ static void dispach_message(struct umqtt_client *cl)
         break;
     case UMQTT_PUBLISH_PACKET:
         if (cl->on_publish)
-            cl->on_publish(cl, pkt->topic, &pkt->payload);
-        free(pkt->topic);
-        ustream_consume(cl->us, pkt->payload.len);
+            cl->on_publish(cl, &pkt->msg);
+        free(pkt->msg.topic);
+        ustream_consume(cl->us, pkt->msg.len);
         break;
     case UMQTT_PUBREL_PACKET:
         if (cl->on_pubrel)
@@ -126,9 +126,9 @@ static void parse_fixed_header(struct umqtt_client *cl, uint8_t *data, int len)
             cl->error = UMQTT_REMAINING_LENGTH_MISMATCH;
         break;
     case UMQTT_PUBLISH_PACKET:
-        pkt->payload.dup = data[0] & 0x08;
-        pkt->payload.qos = (data[0] >> 1) & 0x03;
-        pkt->payload.retain = data[0] & 0x01;
+        pkt->msg.dup = data[0] & 0x08;
+        pkt->msg.qos = (data[0] >> 1) & 0x03;
+        pkt->msg.retain = data[0] & 0x01;
     default:
         break;
     }
@@ -189,18 +189,18 @@ static void parse_variable_header(struct umqtt_client *cl, uint8_t *data, int le
         if (len < 2)
             return;
         parsed = 2 + (data[0] << 8) + data[1];
-        if (pkt->payload.qos > 0)
+        if (pkt->msg.qos > 0)
             parsed += 2;
         if (len < parsed)
             return;
 
         len = (data[0] << 8) + data[1];
         data += 2;
-        pkt->topic = strndup((const char *)data, len);
+        pkt->msg.topic = strndup((const char *)data, len);
         data += len;
-        if (pkt->payload.qos > 0)
-            pkt->payload.mid = (data[0] << 8) + data[1];
-        pkt->payload.len = pkt->remlen - parsed;
+        if (pkt->msg.qos > 0)
+            pkt->msg.mid = (data[0] << 8) + data[1];
+        pkt->msg.len = pkt->remlen - parsed;
         cl->ps = PARSE_STATE_PAYLOAD;
         break;
     default:
@@ -225,9 +225,9 @@ static void parse_payload(struct umqtt_client *cl, uint8_t *data, int len)
         parsed = pkt->remlen - 2;
         break;
     case UMQTT_PUBLISH_PACKET:
-        if (len < pkt->payload.len)
+        if (len < pkt->msg.len)
             return;
-        pkt->payload.data = (const char *)data;
+        pkt->msg.data = (char *)data;
         cl->ps = PARSE_STATE_DONE;
         break;
     default:

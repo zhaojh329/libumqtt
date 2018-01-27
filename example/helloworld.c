@@ -43,31 +43,12 @@ static void on_conack(struct umqtt_client *cl, bool sp, enum umqtt_return_code c
         }
     };
 
-    ULOG_INFO("on_conack:  Session Present(%d)  code(%u)\n", sp, code);
-
-    switch (code) {
-    case UMQTT_CONNECTION_ACCEPTED:
-        ULOG_INFO("Connection Accepted\n");
-        break;
-    case UMQTT_UNACCEPTABLE_PROTOCOL:
-        ULOG_ERR("Connection Refused, unacceptable protocol version\n");
-        break;
-    case UMQTT_IDENTIFIER_REJECTED:
-        ULOG_ERR("Connection Refused, identifier rejected\n");
-        break;
-    case UMQTT_SERVER_UNAVAILABLE:
-        ULOG_ERR("Connection Refused, Server unavailable\n");
-        break;
-    case UMQTT_BAD_USERNAME_OR_PASSWORD:
-        ULOG_ERR("Connection Refused, bad user name or password\n");
-        break;
-    case UMQTT_NOT_AUTHORIZED:
-        ULOG_ERR("Connection Refused, not authorized\n");
-        break;
-    default:
-        ULOG_ERR("Connection Refused, unknown error\n");
-        break;
+    if (code != UMQTT_CONNECTION_ACCEPTED) {
+        ULOG_ERR("Connect failed:%d\n", code);
+        return;
     }
+
+    ULOG_INFO("on_conack:  Session Present(%d)  code(%u)\n", sp, code);
 
     cl->publish(cl, "test2", "hello world", 1);
     cl->subscribe(cl, topics, ARRAY_SIZE(topics));
@@ -100,10 +81,10 @@ static void on_suback(struct umqtt_client *cl, uint16_t mid, uint8_t qos[], int 
         ULOG_INFO("on_suback msg id: %u, qos: 0x%02X\n", mid, qos[i]);
 }
 
-static void on_publish(struct umqtt_client *cl, const char *topic, struct umqtt_payload *payload)
+static void on_publish(struct umqtt_client *cl, struct umqtt_message *msg)
 {
     ULOG_INFO("on_publish: msd_id(%d) dup(%d) qos(%d) retain(%d) topic(%s) [%.*s]\n",
-        payload->mid, payload->dup, payload->qos, payload->retain, topic, payload->len, payload->data);
+        msg->mid, msg->dup, msg->qos, msg->retain, msg->topic, msg->len, msg->data);
 }
 
 static void on_error(struct umqtt_client *cl)

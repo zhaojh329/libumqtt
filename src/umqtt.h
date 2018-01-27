@@ -83,13 +83,14 @@ struct umqtt_topic {
     uint8_t qos;
 };
 
-struct umqtt_payload {
-    uint16_t len;
-    const char *data;
+struct umqtt_message {
     bool dup;
     bool retain;
     uint8_t qos;
     uint16_t mid;
+    char *topic;
+    uint32_t len;
+    const char *data;
 };
 
 struct umqtt_packet {
@@ -99,8 +100,7 @@ struct umqtt_packet {
     enum umqtt_return_code return_code;
     uint16_t mid;
     uint8_t qos[10];
-    char *topic;
-    struct umqtt_payload payload;
+    struct umqtt_message msg;
 };
 
 struct umqtt_will {
@@ -147,7 +147,7 @@ struct umqtt_client {
     void (*on_pubcomp)(struct umqtt_client *cl, uint16_t mid);
     void (*on_unsuback)(struct umqtt_client *cl, uint16_t mid);
     void (*on_suback)(struct umqtt_client *cl, uint16_t mid, uint8_t qos[], int num);
-    void (*on_publish)(struct umqtt_client *cl, const char *topic, struct umqtt_payload *payload);
+    void (*on_publish)(struct umqtt_client *cl, struct umqtt_message *msg);
     void (*on_error)(struct umqtt_client *cl);
     void (*on_close)(struct umqtt_client *cl);
     void (*free)(struct umqtt_client *cl);

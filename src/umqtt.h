@@ -20,6 +20,7 @@
 
 #include <libubox/uloop.h>
 #include <libubox/ustream.h>
+#include <libubox/avl.h>
 
 #include "config.h"
 
@@ -91,6 +92,7 @@ struct umqtt_message {
     char *topic;
     uint32_t len;
     const char *data;
+    struct avl_node avl;
 };
 
 struct umqtt_packet {
@@ -100,7 +102,7 @@ struct umqtt_packet {
     enum umqtt_return_code return_code;
     uint16_t mid;
     uint8_t qos[10];
-    struct umqtt_message msg;
+    struct umqtt_message *msg;
 };
 
 struct umqtt_will {
@@ -127,6 +129,7 @@ struct umqtt_client {
     uint16_t last_mid;
     enum parse_state ps;
     bool wait_pingresp;
+    struct avl_tree msgs;
 
 #if (UMQTT_SSL_SUPPORT)
     bool ssl_require_validation;

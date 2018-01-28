@@ -30,6 +30,8 @@
 
 static void umqtt_free(struct umqtt_client *cl)
 {
+    struct umqtt_message *msg, *tmp;
+
     uloop_timeout_cancel(&cl->ping_timer);
     ustream_free(&cl->sfd.stream);
     shutdown(cl->sfd.fd.fd, SHUT_RDWR);
@@ -38,6 +40,8 @@ static void umqtt_free(struct umqtt_client *cl)
     if (cl->ssl_ops && cl->ssl_ctx)
         cl->ssl_ops->context_free(cl->ssl_ctx);
 #endif
+    avl_remove_all_elements(&cl->msgs, msg, avl, tmp)
+        free(msg);
     free(cl);
 }
 
@@ -48,9 +52,25 @@ static inline void umqtt_error(struct umqtt_client *cl, int error)
     ustream_state_change(cl->us);
 }
 
-static void send_puback(struct umqtt_client *cl, uint16_t mid)
+static inline void send_puback(struct umqtt_client *cl, uint16_t mid)
 {
     uint8_t buf[4] = {0x40, 0x02};
+
+    *((uint16_t *)&buf[2]) = htons(mid);
+    ustream_write(cl->us, (const char *)buf, 4, false);
+}
+
+static inline void send_pubrec(struct umqtt_client *cl, uint16_t mid)
+{
+    uint8_t buf[4] = {0x50, 0x02};
+
+    *((uint16_t *)&buf[2]) = htons(mid);
+    ustream_write(cl->us, (const char *)buf, 4, false);
+}
+
+static inline void send_pubcomp(struct umqtt_client *cl, uint16_t mid)
+{
+    uint8_t buf[4] = {0x70, 0x02};
 
     *((uint16_t *)&buf[2]) = htons(mid);
     ustream_write(cl->us, (const char *)buf, 4, false);
@@ -76,17 +96,32 @@ static void dispach_message(struct umqtt_client *cl)
             cl->on_suback(cl, pkt->mid, pkt->qos, pkt->remlen - 2);
         break;
     case UMQTT_PUBLISH_PACKET:
-        if (pkt->msg.qos == 1)
-            send_puback(cl, pkt->msg.mid);
         if (cl->on_publish)
-            cl->on_publish(cl, &pkt->msg);
-        free(pkt->msg.topic);
-        ustream_consume(cl->us, pkt->msg.len);
+            cl->on_publish(cl, pkt->msg);
+
+        free(pkt->msg->topic);
+
+        if (pkt->msg->qos == 2) {
+            pkt->msg->avl.key = &pkt->msg->mid;
+            avl_insert(&cl->msgs, &pkt->msg->avl);
+            send_pubrec(cl, pkt->msg->mid);
+        } else {
+            if (pkt->msg->qos > 0)
+                send_puback(cl, pkt->msg->mid);
+            free(pkt->msg);
+        }
+ustream_consume(cl->us, pkt->msg->len);
         break;
-    case UMQTT_PUBREL_PACKET:
-        if (cl->on_pubrel)
-            cl->on_pubrel(cl, pkt->mid);
-        break;
+    case UMQTT_PUBREL_PACKET: {
+            struct umqtt_message *msg;
+            msg = avl_find_element(&cl->msgs, &pkt->mid, msg, avl);
+            if (msg) {
+                send_pubcomp(cl, pkt->mid);
+                avl_delete(&cl->msgs, &msg->avl);
+                free(msg);
+            }
+            break;
+        }
     case UMQTT_PUBCOMP_PACKET:
         if (cl->on_pubcomp)
             cl->on_pubcomp(cl, pkt->mid);
@@ -135,10 +170,13 @@ static void parse_fixed_header(struct umqtt_client *cl, uint8_t *data, int len)
         if (more_remlen || pkt->remlen != 2)
             cl->error = UMQTT_REMAINING_LENGTH_MISMATCH;
         break;
-    case UMQTT_PUBLISH_PACKET:
-        pkt->msg.dup = data[0] & 0x08;
-        pkt->msg.qos = (data[0] >> 1) & 0x03;
-        pkt->msg.retain = data[0] & 0x01;
+    case UMQTT_PUBLISH_PACKET: {
+            pkt->msg = calloc(1, sizeof(struct umqtt_message));
+            pkt->msg->dup = data[0] & 0x08;
+            pkt->msg->qos = (data[0] >> 1) & 0x03;
+            pkt->msg->retain = data[0] & 0x01;
+            break;
+        }
     default:
         break;
     }
@@ -199,18 +237,18 @@ static void parse_variable_header(struct umqtt_client *cl, uint8_t *data, int le
         if (len < 2)
             return;
         parsed = 2 + (data[0] << 8) + data[1];
-        if (pkt->msg.qos > 0)
+        if (pkt->msg->qos > 0)
             parsed += 2;
         if (len < parsed)
             return;
 
         len = (data[0] << 8) + data[1];
         data += 2;
-        pkt->msg.topic = strndup((const char *)data, len);
+        pkt->msg->topic = strndup((const char *)data, len);
         data += len;
-        if (pkt->msg.qos > 0)
-            pkt->msg.mid = (data[0] << 8) + data[1];
-        pkt->msg.len = pkt->remlen - parsed;
+        if (pkt->msg->qos > 0)
+            pkt->msg->mid = (data[0] << 8) + data[1];
+        pkt->msg->len = pkt->remlen - parsed;
         cl->ps = PARSE_STATE_PAYLOAD;
         break;
     default:
@@ -235,9 +273,9 @@ static void parse_payload(struct umqtt_client *cl, uint8_t *data, int len)
         parsed = pkt->remlen - 2;
         break;
     case UMQTT_PUBLISH_PACKET:
-        if (len < pkt->msg.len)
+        if (len < pkt->msg->len)
             return;
-        pkt->msg.data = (char *)data;
+        pkt->msg->data = (char *)data;
         cl->ps = PARSE_STATE_DONE;
         break;
     default:
@@ -599,6 +637,11 @@ static void umqtt_ping_cb(struct uloop_timeout *timeout)
     uloop_timeout_set(&cl->ping_timer, 1 * 1000);
 }
 
+static int msg_cmp(const void *k1, const void *k2, void *ptr)
+{
+    return *(uint16_t *)k1 - *(uint16_t *)k2;
+}
+
 struct umqtt_client *umqtt_new_ssl(const char *host, int port, bool ssl, const char *ca_crt_file, bool verify)
 {
     struct umqtt_client *cl = NULL;
@@ -627,6 +670,8 @@ struct umqtt_client *umqtt_new_ssl(const char *host, int port, bool ssl, const c
     cl->ping_timer.cb = umqtt_ping_cb;
 
     ustream_fd_init(&cl->sfd, sock);
+
+    avl_init(&cl->msgs, msg_cmp, false, NULL);
 
     if (ssl) {
 #if (UMQTT_SSL_SUPPORT)

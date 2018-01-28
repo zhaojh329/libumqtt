@@ -48,6 +48,14 @@ static inline void umqtt_error(struct umqtt_client *cl, int error)
     ustream_state_change(cl->us);
 }
 
+static void send_puback(struct umqtt_client *cl, uint16_t mid)
+{
+    uint8_t buf[4] = {0x40, 0x02};
+
+    *((uint16_t *)&buf[2]) = htons(mid);
+    ustream_write(cl->us, (const char *)buf, 4, false);
+}
+
 static void dispach_message(struct umqtt_client *cl)
 {
     struct umqtt_packet *pkt = &cl->pkt;
@@ -68,6 +76,8 @@ static void dispach_message(struct umqtt_client *cl)
             cl->on_suback(cl, pkt->mid, pkt->qos, pkt->remlen - 2);
         break;
     case UMQTT_PUBLISH_PACKET:
+        if (pkt->msg.qos == 1)
+            send_puback(cl, pkt->msg.mid);
         if (cl->on_publish)
             cl->on_publish(cl, &pkt->msg);
         free(pkt->msg.topic);

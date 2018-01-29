@@ -31,6 +31,8 @@
  		buf += 2;							\
  	} while (0)
 
+#define UMQTT_GET_U16(buf)	ntohs(*(uint16_t *)&buf[0]);
+
 #define UMQTT_PUT_STRING(buf, len, str) 	\
  	do {									\
  		UMQTT_PUT_U16(buf, len);			\

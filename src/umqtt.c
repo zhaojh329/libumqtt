@@ -107,7 +107,7 @@ static void handle_conack(struct umqtt_client *cl, uint8_t *data)
 
 static void handle_pubackcomp(struct umqtt_client *cl, uint8_t *data)
 {
-    uint16_t mid = (data[0] << 8) | data[1];
+    uint16_t mid = UMQTT_GET_U16(data);
     struct umqtt_message *msg;
 
     msg = avl_find_element(&cl->out_queue, &mid, msg, avl);
@@ -119,7 +119,7 @@ static void handle_pubackcomp(struct umqtt_client *cl, uint8_t *data)
 
 static void handle_pubrec(struct umqtt_client *cl, uint8_t *data)
 {
-    uint16_t mid = (data[0] << 8) | data[1];
+    uint16_t mid = UMQTT_GET_U16(data);
     struct umqtt_message *msg;
 
     send_pubrel(cl, mid);
@@ -138,7 +138,7 @@ static void handle_pubrec(struct umqtt_client *cl, uint8_t *data)
 
 static void handle_pubrel(struct umqtt_client *cl, uint8_t *data)
 {
-    uint16_t mid = (data[0] << 8) | data[1];
+    uint16_t mid = UMQTT_GET_U16(data);
     struct umqtt_message *msg;
 
     send_pubcomp(cl, mid);
@@ -157,7 +157,7 @@ static void handle_suback(struct umqtt_client *cl, uint8_t *data)
 {
     struct umqtt_packet *pkt = &cl->pkt;
     if (cl->on_suback) {
-        uint16_t mid = (data[0] << 8) | data[1];
+        uint16_t mid = UMQTT_GET_U16(data);
         cl->on_suback(cl, mid, data + 2, pkt->remlen - 2);
     }
 }
@@ -165,7 +165,7 @@ static void handle_suback(struct umqtt_client *cl, uint8_t *data)
 static void handle_publish(struct umqtt_client *cl, uint8_t *data)
 {
     struct umqtt_packet *pkt = &cl->pkt;
-    int len = (data[0] << 8) + data[1];
+    int len = UMQTT_GET_U16(data);
 
     data += 2;
     pkt->msg->topic = strndup((const char *)data, len);
@@ -173,7 +173,7 @@ static void handle_publish(struct umqtt_client *cl, uint8_t *data)
     if (pkt->msg->qos > 0) {
         struct umqtt_message *msg;
 
-        pkt->msg->mid = (data[0] << 8) + data[1];
+        pkt->msg->mid = UMQTT_GET_U16(data);
         len += 2;
         data += 2;
 

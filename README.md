@@ -24,6 +24,7 @@
 [CyaSSl(wolfssl)]: https://github.com/wolfSSL/wolfssl
 
 A Lightweight and fully asynchronous MQTT 3.1.1 client C library based on libubox for Embedded Linux.
+Support QoS 0, 1 and 2. Support ssl.
 
 `Keep Watching for More Actions on This Space`
 

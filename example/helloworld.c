@@ -52,11 +52,6 @@ static void on_conack(struct umqtt_client *cl, bool sp, enum umqtt_return_code c
     cl->subscribe(cl, topics, ARRAY_SIZE(topics));
 }
 
-static void on_unsuback(struct umqtt_client *cl, uint16_t mid)
-{
-    ULOG_INFO("on_unsuback msg id: %u\n", mid);
-}
-
 static void on_suback(struct umqtt_client *cl, uint16_t mid, uint8_t *granted_qos, int qos_count)
 {
     int i;
@@ -154,7 +149,6 @@ int main(int argc, char **argv)
     cl->on_conack = on_conack;
     cl->on_suback = on_suback;
     cl->on_publish = on_publish;
-    cl->on_unsuback = on_unsuback;
     cl->on_error = on_error;
     cl->on_close = on_close;
 

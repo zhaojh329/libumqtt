@@ -332,7 +332,7 @@ static inline void __umqtt_notify_read(struct umqtt_client *cl, struct ustream *
 
         if (!parse_cbs[cl->ps](cl, data, len))
             break;
-    } while(1);
+    } while(!cl->error);
 
     if (cl->error)
         umqtt_error(cl, cl->error);

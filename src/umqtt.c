@@ -830,6 +830,8 @@ struct umqtt_client *umqtt_new_ssl(const char *host, int port, bool ssl, const c
     return cl;
 
 err:
+    if (sock)
+        close(sock);
     if (cl)
         cl->free(cl);
 

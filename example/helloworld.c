@@ -23,6 +23,38 @@
 #include <libubox/utils.h>
 #include <libubox/ulog.h>
 
+#define RECONNECT_INTERVAL  5
+
+struct config {
+    bool auto_reconnect;
+    bool ssl_verify;
+    const char *host;
+    int port;
+    bool ssl;
+    const char *crt_file;
+    struct umqtt_options options;
+    struct umqtt_will will;
+};
+
+static struct uloop_timeout reconnect_timer;
+static struct umqtt_client *gcl;
+static struct config cfg = {
+    .ssl_verify = true,
+    .host = "localhost",
+    .port = 1883,
+    .options = {
+        .keep_alive = 30,
+        .client_id = "libumqtt-Test",
+        .clean_session = true,
+        .username = "test",
+        .password = "123456"
+    },
+    .will = {
+        .topic = "will",
+        .payload = "will test"
+    }
+};
+
 static void on_conack(struct umqtt_client *cl, bool sp, enum umqtt_return_code code)
 {
     struct umqtt_topic topics[] = {
@@ -48,8 +80,10 @@ static void on_conack(struct umqtt_client *cl, bool sp, enum umqtt_return_code c
 
     ULOG_INFO("on_conack:  Session Present(%d)  code(%u)\n", sp, code);
 
+    if (!sp)
+        cl->subscribe(cl, topics, ARRAY_SIZE(topics));
+
     cl->publish(cl, "test4", strlen("hello world"), "hello world", 2, false);
-    cl->subscribe(cl, topics, ARRAY_SIZE(topics));
 }
 
 static void on_suback(struct umqtt_client *cl, uint16_t mid, uint8_t *granted_qos, int qos_count)
@@ -76,7 +110,37 @@ static void on_error(struct umqtt_client *cl)
 static void on_close(struct umqtt_client *cl)
 {
     ULOG_INFO("on_close\n");
-    uloop_end();
+
+    if (cfg.auto_reconnect) {
+        gcl->free(gcl);
+        gcl = NULL;
+        uloop_timeout_set(&reconnect_timer, RECONNECT_INTERVAL * 1000);
+    } else {
+        uloop_end();
+    }
+}
+
+static void do_connect(struct uloop_timeout *utm)
+{
+    gcl = umqtt_new_ssl(cfg.host, cfg.port, cfg.ssl, cfg.crt_file, cfg.ssl_verify);
+    if (gcl) {
+        gcl->on_conack = on_conack;
+        gcl->on_suback = on_suback;
+        gcl->on_publish = on_publish;
+        gcl->on_error = on_error;
+        gcl->on_close = on_close;
+
+        if (gcl->connect(gcl, &cfg.options, &cfg.will) < 0) {
+            ULOG_ERR("connect failed\n");
+            uloop_end();
+        }
+        return;
+    }
+
+    if (uloop_cancelled || !cfg.auto_reconnect)
+        uloop_end();
+    else
+        uloop_timeout_set(&reconnect_timer, RECONNECT_INTERVAL * 1000);
 }
 
 static void usage(const char *prog)
@@ -87,6 +151,7 @@ static void usage(const char *prog)
         "      -c file      # Load CA certificates from file\n"
         "      -n           # don't validate the server's certificate\n"
         "      -s           # Use ssl\n"
+        "      -a           # Auto reconnect to the server\n"
         , prog);
     exit(1);
 }
@@ -95,41 +160,27 @@ int main(int argc, char **argv)
 {
     int opt;
     struct umqtt_client *cl = NULL;
-    static bool verify = true;
-    const char *host = "localhost";
-    int port = 1883;
-    bool ssl = false;
-    const char *crt_file = NULL;
-    struct umqtt_options options = {
-        .keep_alive = 30,
-        .client_id = "libumqtt-Test",
-        .clean_session = true,
-        .username = "test",
-        .password = "123456"
-    };
 
-    struct umqtt_will will = {
-        .topic = "will",
-        .payload = "will test"
-    };
-
-    while ((opt = getopt(argc, argv, "h:p:nc:s")) != -1) {
+    while ((opt = getopt(argc, argv, "h:p:nc:sa")) != -1) {
         switch (opt)
         {
         case 'h':
-            host = optarg;
+            cfg.host = optarg;
             break;
         case 'p':
-            port = atoi(optarg);
+            cfg.port = atoi(optarg);
             break;
         case 's':
-            ssl = true;
+            cfg.ssl = true;
             break;
         case 'n':
-            verify = false;
+            cfg.ssl_verify = false;
             break;
         case 'c':
-            crt_file = optarg;
+            cfg.crt_file = optarg;
+            break;
+        case 'a':
+            cfg.auto_reconnect = true;
             break;
         default: /* '?' */
             usage(argv[0]);
@@ -140,27 +191,13 @@ int main(int argc, char **argv)
 
     uloop_init();
 
-    cl = umqtt_new_ssl(host, port, ssl, crt_file, verify);
-    if (!cl) {
-        uloop_done();
-        return -1;
-    }
-   
-    cl->on_conack = on_conack;
-    cl->on_suback = on_suback;
-    cl->on_publish = on_publish;
-    cl->on_error = on_error;
-    cl->on_close = on_close;
-
-    if (cl->connect(cl, &options, &will) < 0) {
-        ULOG_ERR("connect failed\n");
-        goto err;
-    }
+    reconnect_timer.cb = do_connect;
+    uloop_timeout_set(&reconnect_timer, 100);
 
     uloop_run();
 
-err:
-    cl->free(cl);
+    if (gcl)
+        gcl->free(gcl);
 
     uloop_done();
     

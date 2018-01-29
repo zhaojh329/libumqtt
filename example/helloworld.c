@@ -59,7 +59,7 @@ static void on_suback(struct umqtt_client *cl, uint16_t mid, uint8_t *granted_qo
     ULOG_INFO("on_suback mid(%u), qos(", mid);
     for (i = 0; i < qos_count; i++)
         ULOG_INFO("%d ", granted_qos[i]);
-    ULOG_INFO(")\n");
+    ULOG_INFO("\b)\n");
 }
 
 static void on_publish(struct umqtt_client *cl, struct umqtt_message *msg)

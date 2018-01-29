@@ -33,9 +33,6 @@
 
 #define UMQTT_MAX_REMLEN 268435455 
 
-#define UMQTT_MESSAGE_DIR_IN    0x00
-#define UMQTT_MESSAGE_DIR_OUT   0x01
-
 enum umqtt_packet_type {
     UMQTT_NO_PACKET,
     UMQTT_CONNECT_PACKET,
@@ -76,8 +73,7 @@ enum umqtt_error_code {
 enum parse_state {
     PARSE_STATE_FH,         /* Fixed header */
     PARSE_STATE_REMLEN,     /* Remaining Length */
-    PARSE_STATE_VH,         /* Variable header */
-    PARSE_STATE_PAYLOAD     /* Payload */
+    PARSE_STATE_HANDLE      /* handle packet */
 };
 
 struct umqtt_topic {
@@ -102,7 +98,6 @@ enum umqtt_msg_state {
 };
 
 struct umqtt_message {
-    uint8_t direction;
     time_t timestamp;
     enum umqtt_msg_state state;
     bool dup;
@@ -144,10 +139,10 @@ struct umqtt_client {
     struct uloop_timeout ping_timer;
     struct uloop_timeout retry_timer;
     enum umqtt_error_code error;
-    uint16_t last_mid;
     enum parse_state ps;
     bool wait_pingresp;
-    struct avl_tree msgs;
+    struct avl_tree in_queue;
+    struct avl_tree out_queue;
 
 #if (UMQTT_SSL_SUPPORT)
     bool ssl_require_validation;

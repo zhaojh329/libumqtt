@@ -30,13 +30,11 @@ static void on_conack(struct umqtt_client *cl, bool sp, enum umqtt_return_code c
             .len = strlen("test1"),
             .topic = "test1",
             .qos = 0x00
-        },
-        {
+        },{
             .len = strlen("test2"),
             .topic = "test2",
             .qos = 0x01
-        },
-        {
+        },{
             .len = strlen("test3"),
             .topic = "test3",
             .qos = 0x02
@@ -50,23 +48,8 @@ static void on_conack(struct umqtt_client *cl, bool sp, enum umqtt_return_code c
 
     ULOG_INFO("on_conack:  Session Present(%d)  code(%u)\n", sp, code);
 
-    cl->publish(cl, "test2", "hello world", 1);
+    cl->publish(cl, "test4", strlen("hello world"), "hello world", 2, false);
     cl->subscribe(cl, topics, ARRAY_SIZE(topics));
-}
-
-static void on_puback(struct umqtt_client *cl, uint16_t mid)
-{
-    ULOG_INFO("on_puback msg id: %u\n", mid);
-}
-
-static void on_pubrel(struct umqtt_client *cl, uint16_t mid)
-{
-    ULOG_INFO("on_pubrel msg id: %u\n", mid);
-}
-
-static void on_pubcomp(struct umqtt_client *cl, uint16_t mid)
-{
-    ULOG_INFO("on_pubcomp msg id: %u\n", mid);
 }
 
 static void on_unsuback(struct umqtt_client *cl, uint16_t mid)
@@ -74,17 +57,20 @@ static void on_unsuback(struct umqtt_client *cl, uint16_t mid)
     ULOG_INFO("on_unsuback msg id: %u\n", mid);
 }
 
-static void on_suback(struct umqtt_client *cl, uint16_t mid, uint8_t qos[], int num)
+static void on_suback(struct umqtt_client *cl, uint16_t mid, uint8_t *granted_qos, int qos_count)
 {
     int i;
-    for (i = 0; i < num; i++)
-        ULOG_INFO("on_suback msg id: %u, qos: 0x%02X\n", mid, qos[i]);
+
+    ULOG_INFO("on_suback mid(%u), qos(", mid);
+    for (i = 0; i < qos_count; i++)
+        ULOG_INFO("%d ", granted_qos[i]);
+    ULOG_INFO(")\n");
 }
 
 static void on_publish(struct umqtt_client *cl, struct umqtt_message *msg)
 {
-    ULOG_INFO("on_publish: msd_id(%d) dup(%d) qos(%d) retain(%d) topic(%s) [%.*s]\n",
-        msg->mid, msg->dup, msg->qos, msg->retain, msg->topic, msg->len, msg->data);
+    ULOG_INFO("on_publish: mid(%d) dup(%d) qos(%d) retain(%d) topic(%s) [%.*s]\n",
+        msg->mid, msg->dup, msg->qos, msg->retain, msg->topic, msg->payloadlen, msg->payload);
 }
 
 static void on_error(struct umqtt_client *cl)
@@ -166,11 +152,8 @@ int main(int argc, char **argv)
     }
    
     cl->on_conack = on_conack;
-    cl->on_puback = on_puback;
-    cl->on_pubrel = on_pubrel;
     cl->on_suback = on_suback;
     cl->on_publish = on_publish;
-    cl->on_pubcomp = on_pubcomp;
     cl->on_unsuback = on_unsuback;
     cl->on_error = on_error;
     cl->on_close = on_close;

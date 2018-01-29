@@ -33,6 +33,9 @@
 
 #define UMQTT_MAX_REMLEN 268435455 
 
+#define UMQTT_MESSAGE_DIR_IN    0x00
+#define UMQTT_MESSAGE_DIR_OUT   0x01
+
 enum umqtt_packet_type {
     UMQTT_NO_PACKET,
     UMQTT_CONNECT_PACKET,
@@ -74,8 +77,7 @@ enum parse_state {
     PARSE_STATE_FH,         /* Fixed header */
     PARSE_STATE_REMLEN,     /* Remaining Length */
     PARSE_STATE_VH,         /* Variable header */
-    PARSE_STATE_PAYLOAD,    /* Payload */
-    PARSE_STATE_DONE
+    PARSE_STATE_PAYLOAD     /* Payload */
 };
 
 struct umqtt_topic {
@@ -84,24 +86,39 @@ struct umqtt_topic {
     uint8_t qos;
 };
 
+enum umqtt_msg_state {
+    umqtt_ms_invalid,
+    umqtt_ms_publish_qos0,
+    umqtt_ms_publish_qos1,
+    umqtt_ms_wait_for_puback,
+    umqtt_ms_publish_qos2,
+    umqtt_ms_wait_for_pubrec,
+    umqtt_ms_resend_pubrel,
+    umqtt_ms_wait_for_pubrel,
+    umqtt_ms_resend_pubcomp,
+    umqtt_ms_wait_for_pubcomp,
+    umqtt_ms_send_pubrec,
+    umqtt_ms_queued
+};
+
 struct umqtt_message {
+    uint8_t direction;
+    time_t timestamp;
+    enum umqtt_msg_state state;
     bool dup;
     bool retain;
     uint8_t qos;
     uint16_t mid;
     char *topic;
-    uint32_t len;
-    const char *data;
+    uint32_t payloadlen;
+    void *payload;
     struct avl_node avl;
 };
 
 struct umqtt_packet {
     uint8_t type;
     uint32_t remlen;
-    bool sp;    /*  Session Present */
-    enum umqtt_return_code return_code;
     uint16_t mid;
-    uint8_t qos[10];
     struct umqtt_message *msg;
 };
 
@@ -125,6 +142,7 @@ struct umqtt_client {
     struct ustream_fd sfd;
     struct umqtt_packet pkt;
     struct uloop_timeout ping_timer;
+    struct uloop_timeout retry_timer;
     enum umqtt_error_code error;
     uint16_t last_mid;
     enum parse_state ps;
@@ -141,15 +159,13 @@ struct umqtt_client {
     int (*connect)(struct umqtt_client *cl, struct umqtt_options *opts, struct umqtt_will *will);
     int (*subscribe)(struct umqtt_client *cl, struct umqtt_topic *topics, int num);
     int (*unsubscribe)(struct umqtt_client *cl, struct umqtt_topic *topics, int num);
-    int (*publish)(struct umqtt_client *cl, const char *topic, const char *payload, uint8_t qos);
+    int (*publish)(struct umqtt_client *cl, const char *topic, uint32_t payloadlen, const void *payload, uint8_t qos, bool retain);
     void (*ping)(struct umqtt_client *cl);
     void (*disconnect)(struct umqtt_client *cl);
     void (*on_conack)(struct umqtt_client *cl, bool sp, enum umqtt_return_code code);
-    void (*on_puback)(struct umqtt_client *cl, uint16_t mid);
     void (*on_pubrel)(struct umqtt_client *cl, uint16_t mid);
-    void (*on_pubcomp)(struct umqtt_client *cl, uint16_t mid);
     void (*on_unsuback)(struct umqtt_client *cl, uint16_t mid);
-    void (*on_suback)(struct umqtt_client *cl, uint16_t mid, uint8_t qos[], int num);
+    void (*on_suback)(struct umqtt_client *cl, uint16_t mid, uint8_t *granted_qos, int qos_count);
     void (*on_publish)(struct umqtt_client *cl, struct umqtt_message *msg);
     void (*on_error)(struct umqtt_client *cl);
     void (*on_close)(struct umqtt_client *cl);

@@ -125,7 +125,7 @@ static void handle_pubrec(struct umqtt_client *cl, uint8_t *data)
     send_pubrel(cl, mid);
 
     msg = avl_find_element(&cl->out_queue, &mid, msg, avl);
-    if (msg) {        
+    if (msg) {
         
         free(msg->topic);
         msg->topic = NULL;
@@ -835,5 +835,5 @@ err:
     if (cl)
         cl->free(cl);
 
-    return NULL;    
+    return NULL;
 }

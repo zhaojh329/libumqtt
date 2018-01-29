@@ -255,8 +255,7 @@ static void parse_variable_header(struct umqtt_client *cl, uint8_t *data, int le
             cl->ps = PARSE_STATE_PAYLOAD;
         } else {
             cl->ps = PARSE_STATE_FH;
-            if (cl->on_unsuback)
-                cl->on_unsuback(cl, pkt->mid);
+            /* TODO */
         }
         break;
     case UMQTT_PUBLISH_PACKET:

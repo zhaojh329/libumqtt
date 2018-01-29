@@ -163,8 +163,6 @@ struct umqtt_client {
     void (*ping)(struct umqtt_client *cl);
     void (*disconnect)(struct umqtt_client *cl);
     void (*on_conack)(struct umqtt_client *cl, bool sp, enum umqtt_return_code code);
-    void (*on_pubrel)(struct umqtt_client *cl, uint16_t mid);
-    void (*on_unsuback)(struct umqtt_client *cl, uint16_t mid);
     void (*on_suback)(struct umqtt_client *cl, uint16_t mid, uint8_t *granted_qos, int qos_count);
     void (*on_publish)(struct umqtt_client *cl, struct umqtt_message *msg);
     void (*on_error)(struct umqtt_client *cl);

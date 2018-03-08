@@ -53,6 +53,9 @@ Install dependent packages
     git clone https://git.openwrt.org/project/libubox.git
     cd libubox && cmake -DBUILD_LUA=OFF . && sudo make install
 
+    git clone https://git.openwrt.org/project/ustream-ssl.git
+    cd ustream-ssl && cmake . && sudo make install
+
 Install libumqtt
     
     git clone https://github.com/zhaojh329/libumqtt.git

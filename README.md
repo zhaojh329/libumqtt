@@ -71,3 +71,7 @@ You need to cross compiling by yourself
 # Contributing
 If you would like to help making [libumqtt](https://github.com/zhaojh329/libumqtt) better,
 see the [CONTRIBUTING.md](/CONTRIBUTING.md) file.
+
+# QQ group: 153530783
+
+# If the project is helpful to you, please do not hesitate to star. Thank you!

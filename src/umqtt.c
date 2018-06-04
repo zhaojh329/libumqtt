@@ -204,7 +204,7 @@ static void handle_publish(struct umqtt_client *cl, uint8_t *data)
     }
 }
 
-static bool handle_packet(struct umqtt_client *cl, uint8_t *data, int len)
+static bool handle_packet(struct umqtt_client *cl, uint8_t *data, uint32_t len)
 {
     struct umqtt_packet *pkt = &cl->pkt;
 
@@ -242,7 +242,7 @@ static bool handle_packet(struct umqtt_client *cl, uint8_t *data, int len)
     return true;
 }
 
-static bool parse_fixed_header(struct umqtt_client *cl, uint8_t *data, int len)
+static bool parse_fixed_header(struct umqtt_client *cl, uint8_t *data, uint32_t len)
 {
     struct umqtt_packet *pkt = &cl->pkt;
     bool more_remlen;
@@ -290,9 +290,9 @@ static bool parse_fixed_header(struct umqtt_client *cl, uint8_t *data, int len)
     return true;
 }
 
-static bool parse_remaining_ength(struct umqtt_client *cl, uint8_t *data, int len)
+static bool parse_remaining_ength(struct umqtt_client *cl, uint8_t *data, uint32_t len)
 {
-    int parsed = 0;
+    uint32_t parsed = 0;
     struct umqtt_packet *pkt = &cl->pkt;
 
     while (parsed++ < len) {
@@ -312,7 +312,7 @@ static bool parse_remaining_ength(struct umqtt_client *cl, uint8_t *data, int le
     return true;
 }
 
-typedef bool (*parse_cb_t)(struct umqtt_client *cl, uint8_t *data, int len);
+typedef bool (*parse_cb_t)(struct umqtt_client *cl, uint8_t *data, uint32_t len);
 static parse_cb_t parse_cbs[] = {
     [PARSE_STATE_FH] = parse_fixed_header,
     [PARSE_STATE_REMLEN] = parse_remaining_ength,
@@ -796,8 +796,8 @@ struct umqtt_client *umqtt_new_ssl(const char *host, int port, bool ssl, const c
                 goto err;
             }
         } else if (verify) {
-            int i;
             glob_t gl;
+            unsigned int i;
 
             cl->ssl_require_validation = true;
 

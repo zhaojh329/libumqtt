@@ -601,7 +601,7 @@ static int __umqtt_publish(struct umqtt_client *cl, uint16_t mid, const char *to
     const void *payload, uint8_t qos, bool retain, bool dup)
 {
     uint8_t *buf, *p;
-    uint32_t remlen = 2 + strlen(topic) + strlen(payload);
+    uint32_t remlen = 2 + strlen(topic) + payloadlen;
 
     if (qos > 0)
         remlen += 2;
@@ -625,7 +625,7 @@ static int __umqtt_publish(struct umqtt_client *cl, uint16_t mid, const char *to
     if (qos > 0)
         UMQTT_PUT_U16(p, mid);
 
-    memcpy(p, payload, strlen(payload));
+    memcpy(p, payload, payloadlen);
 
     ustream_write(cl->us, (const char *)buf, remlen + 2, false);
     free(buf);

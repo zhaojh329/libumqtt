@@ -290,7 +290,7 @@ static bool parse_fixed_header(struct umqtt_client *cl, uint8_t *data, uint32_t 
     return true;
 }
 
-static bool parse_remaining_ength(struct umqtt_client *cl, uint8_t *data, uint32_t len)
+static bool parse_remaining_length(struct umqtt_client *cl, uint8_t *data, uint32_t len)
 {
     uint32_t parsed = 0;
     struct umqtt_packet *pkt = &cl->pkt;
@@ -315,7 +315,7 @@ static bool parse_remaining_ength(struct umqtt_client *cl, uint8_t *data, uint32
 typedef bool (*parse_cb_t)(struct umqtt_client *cl, uint8_t *data, uint32_t len);
 static parse_cb_t parse_cbs[] = {
     [PARSE_STATE_FH] = parse_fixed_header,
-    [PARSE_STATE_REMLEN] = parse_remaining_ength,
+    [PARSE_STATE_REMLEN] = parse_remaining_length,
     [PARSE_STATE_HANDLE] = handle_packet
 };
 

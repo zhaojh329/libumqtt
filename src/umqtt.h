@@ -167,6 +167,7 @@ struct umqtt_client {
     void (*on_publish)(struct umqtt_client *cl, struct umqtt_message *msg);
     void (*on_error)(struct umqtt_client *cl);
     void (*on_close)(struct umqtt_client *cl);
+    void (*on_pong)(struct umqtt_client *cl);
     void (*free)(struct umqtt_client *cl);
 };
 

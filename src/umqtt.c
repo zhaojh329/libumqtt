@@ -265,6 +265,8 @@ static bool parse_fixed_header(struct umqtt_client *cl, uint8_t *data, uint32_t 
 
     switch (pkt->type) {
     case UMQTT_PINGRESP_PACKET:
+	if (cl->on_pong)
+		cl->on_pong(cl);
         cl->wait_pingresp = false;
         uloop_timeout_set(&cl->ping_timer, cl->ping_timer_interval * 1000);
         break;

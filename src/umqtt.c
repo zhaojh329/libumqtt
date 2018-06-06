@@ -99,8 +99,8 @@ static void handle_conack(struct umqtt_client *cl, uint8_t *data)
     int return_code =  data[1];
 
     if (return_code == UMQTT_CONNECTION_ACCEPTED) {
-        uloop_timeout_set(&cl->ping_timer, UMQTT_PING_INTERVAL * 1000);
-        uloop_timeout_set(&cl->retry_timer, 1000);
+        uloop_timeout_set(&cl->ping_timer, cl->ping_timer_interval * 1000);
+        uloop_timeout_set(&cl->retry_timer, cl->retry_timer_interval * 1000);
     }
 
     if (cl->on_conack)
@@ -266,7 +266,7 @@ static bool parse_fixed_header(struct umqtt_client *cl, uint8_t *data, uint32_t 
     switch (pkt->type) {
     case UMQTT_PINGRESP_PACKET:
         cl->wait_pingresp = false;
-        uloop_timeout_set(&cl->ping_timer, UMQTT_PING_INTERVAL * 1000);
+        uloop_timeout_set(&cl->ping_timer, cl->ping_timer_interval * 1000);
         break;
     case UMQTT_CONNACK_PACKET:
     case UMQTT_PUBACK_PACKET:
@@ -697,7 +697,7 @@ static void umqtt_ping_cb(struct uloop_timeout *timeout)
     }
     cl->ping(cl);
     cl->wait_pingresp = true;
-    uloop_timeout_set(&cl->ping_timer, 1 * 1000);
+    uloop_timeout_set(&cl->ping_timer, cl->ping_timer_interval * 1000);
 }
 
 
@@ -735,7 +735,7 @@ static void umqtt_retry_cb(struct uloop_timeout *timeout)
 
     umqtt_retry(cl, &cl->in_queue);
     umqtt_retry(cl, &cl->out_queue);
-    uloop_timeout_set(&cl->retry_timer, 1000);
+    uloop_timeout_set(&cl->retry_timer, cl->retry_timer_interval * 1000);
 }
 
 static int avl_pkt_cmp(const void *k1, const void *k2, void *ptr)
@@ -770,6 +770,8 @@ struct umqtt_client *umqtt_new_ssl(const char *host, int port, bool ssl, const c
 
     cl->ping_timer.cb = umqtt_ping_cb;
     cl->retry_timer.cb = umqtt_retry_cb;
+    cl->ping_timer_interval = UMQTT_PING_INTERVAL;
+    cl->retry_timer_interval = UMQTT_RETRY_INTERVAL;
 
     ustream_fd_init(&cl->sfd, sock);
 

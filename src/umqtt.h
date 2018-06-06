@@ -31,6 +31,7 @@
 #include <libubox/ustream-ssl.h>
 #endif
 
+#define UMQTT_RETRY_INTERVAL  1
 #define UMQTT_PING_INTERVAL  30
 
 #define UMQTT_MAX_REMLEN 268435455 
@@ -140,6 +141,8 @@ struct umqtt_client {
     struct umqtt_packet pkt;
     struct uloop_timeout ping_timer;
     struct uloop_timeout retry_timer;
+    int ping_timer_interval;
+    int retry_timer_interval;
     enum umqtt_error_code error;
     enum parse_state ps;
     bool wait_pingresp;

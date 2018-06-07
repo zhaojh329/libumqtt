@@ -6,7 +6,12 @@ add_definitions(-O -Wall -Wextra -Werror --std=gnu99 -D_GNU_SOURCE -Wno-misleadi
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
+option(BUILD_LUA "Enable build of Lua module" OFF)
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 
 add_subdirectory(src)
 add_subdirectory(example)
+
+if(BUILD_LUA)
+add_subdirectory(lua)
+endif()

@@ -56,7 +56,6 @@ static void umqtt_free(struct umqtt_client *cl)
         umqtt_message_free(msg, false);
     avl_remove_all_elements(&cl->out_queue, msg, avl, tmp)
         umqtt_message_free(msg, true);
-    free(cl);
 }
 
 static inline void umqtt_error(struct umqtt_client *cl, int error)
@@ -743,20 +742,16 @@ static int avl_pkt_cmp(const void *k1, const void *k2, void *ptr)
     return *(uint16_t *)k1 - *(uint16_t *)k2;
 }
 
-struct umqtt_client *umqtt_new_ssl(const char *host, int port, bool ssl, const char *ca_crt_file, bool verify)
+int umqtt_new_ssl(struct umqtt_client *cl, const char *host, int port, bool ssl, const char *ca_crt_file, bool verify)
 {
-    struct umqtt_client *cl = NULL;
     int sock;
+    int ret = -1;
+
+    memset(cl, 0, sizeof(*cl));
 
     sock = usock(USOCK_TCP | USOCK_NOCLOEXEC, host, usock_port(port));
     if (sock < 0) {
         umqtt_log_serr("usock");
-        goto err;
-    }
-
-    cl = calloc(1, sizeof(struct umqtt_client));
-    if (!cl) {
-        umqtt_log_serr("calloc");
         goto err;
     }
 
@@ -822,7 +817,7 @@ struct umqtt_client *umqtt_new_ssl(const char *host, int port, bool ssl, const c
         cl->ssl_ops->set_peer_cn(&cl->ussl, host);
 #else
         umqtt_log_err("SSL support not available");
-        return NULL;
+        return ret;
 #endif
     } else {
         cl->us = &cl->sfd.stream;
@@ -831,13 +826,11 @@ struct umqtt_client *umqtt_new_ssl(const char *host, int port, bool ssl, const c
         cl->us->notify_state = umqtt_notify_state;
     }
 
-    return cl;
+    return 0;
 
 err:
     if (sock)
         close(sock);
-    if (cl)
-        cl->free(cl);
 
-    return NULL;
+    return ret;
 }

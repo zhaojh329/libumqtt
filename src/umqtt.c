@@ -483,7 +483,7 @@ static int umqtt_connect(struct umqtt_client *cl, struct umqtt_options *opts, st
     p = buf = malloc(remlen + 2);
     if (!buf) {
         umqtt_log_serr("malloc\n");
-        return -1;
+        return -2;
     }
 
     *p++ = (UMQTT_CONNECT_PACKET << 4) | 0x00;
@@ -777,18 +777,21 @@ int umqtt_new_ssl(struct umqtt_client *cl, const char *host, int port, bool ssl,
 #if (UMQTT_SSL_SUPPORT)
         cl->ssl_ops = init_ustream_ssl();
         if (!cl->ssl_ops) {
+            ret = -2;
             umqtt_log_err("SSL support not available,please install one of the libustream-ssl-* libraries");
             goto err;
         }
 
         cl->ssl_ctx = cl->ssl_ops->context_new(false);
         if (!cl->ssl_ctx) {
+            ret = -3;
             umqtt_log_err("ustream_ssl_context_new");
             goto err;
         }
 
         if (ca_crt_file) {
             if (cl->ssl_ops->context_add_ca_crt_file(cl->ssl_ctx, ca_crt_file)) {
+                ret = -4;
                 umqtt_log_err("Load CA certificates failed");
                 goto err;
             }

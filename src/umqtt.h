@@ -31,6 +31,7 @@
 #include <libubox/ustream-ssl.h>
 #endif
 
+#define UMQTT_KEEP_ALIVE 30
 #define UMQTT_RETRY_INTERVAL  1
 #define UMQTT_PING_INTERVAL  30
 

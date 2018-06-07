@@ -496,7 +496,7 @@ static int umqtt_connect(struct umqtt_client *cl, struct umqtt_options *opts, st
     *p++ = 0x04;    /* version number */
     *p++ = flags;
 
-    UMQTT_PUT_U16(p, opts->keep_alive);
+    UMQTT_PUT_U16(p, opts->keep_alive > 0 ? opts->keep_alive : UMQTT_KEEP_ALIVE);
     UMQTT_PUT_STRING(p, strlen(opts->client_id), opts->client_id);
 
     if (will && will->topic && will->payload) {

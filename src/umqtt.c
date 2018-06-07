@@ -832,7 +832,7 @@ int umqtt_new_ssl(struct umqtt_client *cl, const char *host, int port, bool ssl,
     return 0;
 
 err:
-    if (sock)
+    if (sock > 0)
         close(sock);
 
     return ret;

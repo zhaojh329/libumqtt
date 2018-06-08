@@ -5,17 +5,18 @@ os:
 
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y libjson-c-dev lua5.1 liblua5.1-0-dev
-  - sudo apt-get remove libssl-dev
+  - sudo apt-get install -y libjson-c-dev lua5.1 liblua5.1-0-dev quilt libssl-dev
 
 install:
   - git clone https://git.openwrt.org/project/libubox.git
   - pushd libubox && cmake . && make && sudo make install && popd
-  - wget https://www.openssl.org/source/openssl-1.0.2n.tar.gz
-  - tar zxvf openssl-1.0.2n.tar.gz
-  - pushd openssl-1.0.2n &&  ./config --prefix=/usr/local --openssldir=/usr/local/openssl shared && make && sudo make install && popd
-  - git clone https://git.openwrt.org/project/ustream-ssl.git
-  - pushd ustream-ssl && cmake . && make && sudo make install && popd
+  - git clone https://github.com/zhaojh329/libumqtt.git
+  - LIBSSL_VER=$(cat /usr/include/openssl/opensslv.h | grep OPENSSL_VERSION_NUMBER | grep -o '[0-9x]\+')
+  - LIBSSL_VER=$(echo ${LIBSSL_VER:2:6})
+  - git clone https://git.openwrt.org/project/ustream-ssl.git && pushd ustream-ssl
+  - [ $LIBSSL_VER -ge 101000 ] && quilt import ../libumqtt/tools/us-openssl_v1_1.patch && quilt push -a
+  - [ $LIBSSL_VER -le 100020 ] && quilt import ../libumqtt/tools/us-openssl_v1_0_1.patch && quilt push -a
+  - cmake . && make && sudo make install && popd
 
 script:
   - mkdir build && cd build

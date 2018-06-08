@@ -145,7 +145,7 @@ git clone https://github.com/zhaojh329/libumqtt.git
 
 	# > 1.1
 	if [ $LIBSSL_VER -ge 101000 ];
-	then 
+	then
 		quilt import ../libumqtt/tools/us-openssl_v1_1.patch
 		quilt push -a
 	elif [ $LIBSSL_VER -le 100020 ];

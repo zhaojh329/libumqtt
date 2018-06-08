@@ -25,6 +25,8 @@ target_link_libraries(umqtt ${EXTRA_LIBS})
 # configure a header file to pass some of the CMake settings to the source code
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
+add_subdirectory(lua)
+
 install(
     FILES
 	    ${CMAKE_CURRENT_BINARY_DIR}/config.h
@@ -41,4 +43,5 @@ install(
 message("")
 message(STATUS "UMQTT_VERSION: ${UMQTT_VERSION_MAJOR}.${UMQTT_VERSION_MINOR}.${UMQTT_VERSION_PATCH}")
 message(STATUS "UMQTT_SSL_SUPPORT: ${UMQTT_SSL_SUPPORT}")
+message(STATUS "UMQTT_LUA_SUPPORT: ${UMQTT_LUA_SUPPORT}")
 message("")

@@ -39,7 +39,7 @@ struct config {
 };
 
 static struct uloop_timeout reconnect_timer;
-static struct umqtt_client *gcl;
+static struct umqtt_client gcl;
 static struct config cfg = {
     .ssl_verify = true,
     .host = "localhost",
@@ -113,8 +113,7 @@ static void on_close(struct umqtt_client *cl)
     ULOG_INFO("on_close\n");
 
     if (cfg.auto_reconnect) {
-        gcl->free(gcl);
-        gcl = NULL;
+        gcl.free(&gcl);
         uloop_timeout_set(&reconnect_timer, RECONNECT_INTERVAL * 1000);
     } else {
         uloop_end();
@@ -123,15 +122,15 @@ static void on_close(struct umqtt_client *cl)
 
 static void do_connect(struct uloop_timeout *utm)
 {
-    gcl = umqtt_new_ssl(cfg.host, cfg.port, cfg.ssl, cfg.crt_file, cfg.ssl_verify);
-    if (gcl) {
-        gcl->on_conack = on_conack;
-        gcl->on_suback = on_suback;
-        gcl->on_publish = on_publish;
-        gcl->on_error = on_error;
-        gcl->on_close = on_close;
+    int r = umqtt_new_ssl(&gcl, cfg.host, cfg.port, cfg.ssl, cfg.crt_file, cfg.ssl_verify);
+    if (r == 0) {
+        gcl.on_conack = on_conack;
+        gcl.on_suback = on_suback;
+        gcl.on_publish = on_publish;
+        gcl.on_error = on_error;
+        gcl.on_close = on_close;
 
-        if (gcl->connect(gcl, &cfg.options, &cfg.will) < 0) {
+        if (gcl.connect(&gcl, &cfg.options, &cfg.will) < 0) {
             ULOG_ERR("connect failed\n");
             uloop_end();
         }
@@ -203,8 +202,8 @@ int main(int argc, char **argv)
 
     uloop_run();
 
-    if (gcl)
-        gcl->free(gcl);
+    if (gcl.free)
+        gcl.free(&gcl);
 
     uloop_done();
     

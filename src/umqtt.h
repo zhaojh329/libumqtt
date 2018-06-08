@@ -31,6 +31,8 @@
 #include <libubox/ustream-ssl.h>
 #endif
 
+#define UMQTT_KEEP_ALIVE 30
+#define UMQTT_RETRY_INTERVAL  1
 #define UMQTT_PING_INTERVAL  30
 
 #define UMQTT_MAX_REMLEN 268435455 
@@ -140,6 +142,8 @@ struct umqtt_client {
     struct umqtt_packet pkt;
     struct uloop_timeout ping_timer;
     struct uloop_timeout retry_timer;
+    int ping_timer_interval;
+    int retry_timer_interval;
     enum umqtt_error_code error;
     enum parse_state ps;
     bool wait_pingresp;
@@ -164,14 +168,15 @@ struct umqtt_client {
     void (*on_publish)(struct umqtt_client *cl, struct umqtt_message *msg);
     void (*on_error)(struct umqtt_client *cl);
     void (*on_close)(struct umqtt_client *cl);
+    void (*on_pong)(struct umqtt_client *cl);
     void (*free)(struct umqtt_client *cl);
 };
 
-struct umqtt_client *umqtt_new_ssl(const char *host, int port, bool ssl, const char *ca_crt_file, bool verify);
+int umqtt_new_ssl(struct umqtt_client *cl, const char *host, int port, bool ssl, const char *ca_crt_file, bool verify);
 
-static inline struct umqtt_client *umqtt_new(const char *host, int port)
+static inline int umqtt_new(struct umqtt_client *cl, const char *host, int port)
 {
-    return umqtt_new_ssl(host, port, false, NULL, false);
+    return umqtt_new_ssl(cl, host, port, false, NULL, false);
 }
 
 #endif

@@ -161,7 +161,6 @@ static void usage(const char *prog)
 int main(int argc, char **argv)
 {
     int opt;
-    struct umqtt_client *cl = NULL;
 
     while ((opt = getopt(argc, argv, "h:p:nc:sa")) != -1) {
         switch (opt)

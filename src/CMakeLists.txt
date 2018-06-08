@@ -1,6 +1,3 @@
-
-add_definitions(-O -Wall -Werror --std=gnu99 -D_GNU_SOURCE -Wno-misleading-indentation)
-
 # The version number.
 set(UMQTT_VERSION_MAJOR 0)
 set(UMQTT_VERSION_MINOR 1)

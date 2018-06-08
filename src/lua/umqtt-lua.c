@@ -12,9 +12,10 @@
 
 #include <lauxlib.h>
 
-#include <umqtt/umqtt.h>
 #include <libubox/utils.h>
 #include <libubox/ulog.h>
+
+#include "umqtt.h"
 
 #define RECONNECT_INTERVAL 5
 

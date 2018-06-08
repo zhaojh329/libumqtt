@@ -7,6 +7,7 @@ UPDATE=
 
 PKG_JSON="libjson-c-dev"
 PKG_SSL="libssl-dev"
+PKG_LIBLUA="liblua5.1-0-dev"
 
 show_distribution() {
 	local pretty_name=""
@@ -50,6 +51,7 @@ detect_pkg_tool() {
 		INSTALL="yum install -y"
 		PKG_JSON="json-c-devel"
 		PKG_SSL="openssl-devel"
+		PKG_LIBLUA="lua-devel"
 		return 0
 	}
 
@@ -58,6 +60,7 @@ detect_pkg_tool() {
 		INSTALL="pacman -S --noconfirm --noprogressbar"
 		PKG_JSON="json-c"
 		PKG_SSL="openssl"
+		PKG_LIBLUA="lua51"
 		return 0
 	}
 
@@ -112,6 +115,8 @@ LIBUBOX_FOUND=
 USTREAM_SSL_FOUND=
 
 check_lib_header json.h json-c > /dev/null || $INSTALL $PKG_JSON
+check_lib_header lua.h > /dev/null || $INSTALL $PKG_LIBLUA
+
 check_lib_header uloop.h libubox > /dev/null && LIBUBOX_FOUND=1
 check_lib_header ustream-ssl.h libubox > /dev/null && USTREAM_SSL_FOUND=1
 
@@ -130,7 +135,7 @@ git clone https://github.com/zhaojh329/libumqtt.git
 # libubox
 [ -n "$LIBUBOX_FOUND" ] || {
 	git clone https://git.openwrt.org/project/libubox.git
-	cd libubox && cmake -DBUILD_LUA=OFF . && make install && cd -
+	cd libubox && cmake . && make install && cd -
 	[ $? -eq 0 ] || exit 1
 }
 

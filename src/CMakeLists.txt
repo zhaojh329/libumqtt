@@ -6,7 +6,7 @@ set(UMQTT_VERSION_PATCH 0)
 # Check the third party Libraries
 find_package(Libubox REQUIRED)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ${LIBUBOX_INCLUDE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR} ${LIBUBOX_INCLUDE_DIR})
 
 set(EXTRA_LIBS ${LIBUBOX_LIBRARY} dl)
 set(SOURCE_FILES umqtt.c log.c)

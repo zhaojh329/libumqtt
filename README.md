@@ -37,29 +37,15 @@ Support QoS 0, 1 and 2. Support ssl. And it also supports Lua API.
 
 
 # How to build and install
-## For Linux distribution, such as Ubuntu and Centos
-Install build tools
+## For Linux distribution: Ubuntu, Debian, ArchLinux, Centos
 
-    sudo apt install gcc cmake git      # For Ubuntu
+    wget -qO- https://raw.githubusercontent.com/zhaojh329/libumqtt/master/tools/install.sh | sudo bash
 
-    yum install gcc cmake git           # For Centos
 
-Install dependent packages
-
-    sudo apt install libjson-c-dev      # For Ubuntu
-
-    sudo apt install json-c-devel       # For Centos
-
-    git clone https://git.openwrt.org/project/libubox.git
-    cd libubox && cmake -DBUILD_LUA=OFF . && sudo make install
-
-    git clone https://git.openwrt.org/project/ustream-ssl.git
-    cd ustream-ssl && cmake . && sudo make install
-
-Install libumqtt
+Build example
     
     git clone https://github.com/zhaojh329/libumqtt.git
-    cd libumqtt && cmake . && sudo make install
+    cd libumqtt && cmake . && make
 
 Run example
 

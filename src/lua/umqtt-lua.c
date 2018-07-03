@@ -562,6 +562,12 @@ static int umqtt_lua_subscribe(lua_State *L)
 	struct umqtt_topic *topics = NULL;
 	struct umqtt_t *u = luaL_checkudata(L, 1, METANAME);
 
+	if (!u->connected) {
+		lua_pushboolean(L, false);
+		lua_pushstring(L, "not connected");
+		return 2;
+	}
+
 	if (!lua_istable(L, 2))
 		return luaL_argerror(L, 2, "provide table with topics");
 
@@ -611,6 +617,12 @@ static int umqtt_lua_publish(lua_State *L)
 	const char *topic = NULL;
 	const char *payload = NULL;
 	struct umqtt_t *u = luaL_checkudata(L, 1, METANAME);
+
+	if (!u->connected) {
+		lua_pushboolean(L, false);
+		lua_pushstring(L, "not connected");
+		return 2;
+	}
 
 	if (!lua_istable(L, 2))
 		return luaL_argerror(L, 2, "provide table with topics");

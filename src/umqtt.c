@@ -631,7 +631,7 @@ static int __umqtt_publish(struct umqtt_client *cl, uint16_t mid, const char *to
         return -1;
     }
 
-    *p++ = (UMQTT_PUBLISH_PACKET << 4) | (qos << 1) | retain;
+    *p++ = (UMQTT_PUBLISH_PACKET << 4) | (dup & 0x1 << 3) | (qos << 1) | retain;
     umqtt_encode_remlen(remlen - remlen_bytes - UMQTT_PKT_HDR_LEN, &p);
 
     UMQTT_PUT_STRING(p, strlen(topic), topic);

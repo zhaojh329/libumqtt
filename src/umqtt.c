@@ -436,6 +436,18 @@ static const struct ustream_ssl_ops *init_ustream_ssl()
 
 #endif
 
+static int umqtt_remlen_bytes(uint32_t remlen)
+{
+    int len = 0;
+
+    do {
+        remlen /= 128;
+	len++;
+    } while (remlen > 0);
+
+    return len;
+}
+
 static void umqtt_encode_remlen(uint32_t remlen, uint8_t **buf)
 {
     do {
@@ -600,24 +612,27 @@ static int __umqtt_publish(struct umqtt_client *cl, uint16_t mid, const char *to
     const void *payload, uint8_t qos, bool retain, bool dup)
 {
     uint8_t *buf, *p;
-    uint32_t remlen = 2 + strlen(topic) + payloadlen;
+    uint32_t remlen = UMQTT_PKT_HDR_LEN + UMQTT_PKT_TOPIC_LEN + strlen(topic) + payloadlen;
+    uint32_t remlen_bytes = umqtt_remlen_bytes(remlen);
+
+    remlen += remlen_bytes;
 
     if (qos > 0)
-        remlen += 2;
+        remlen += UMQTT_PKT_MID_LEN;
 
     if (remlen > UMQTT_MAX_REMLEN) {
         umqtt_log_err("remaining length overflow\n");
         return -1;
     }
 
-    p = buf = malloc(remlen + 2);
+    p = buf = malloc(remlen);
     if (!buf) {
         umqtt_log_serr("malloc\n");
         return -1;
     }
 
-    *p++ = (UMQTT_PUBLISH_PACKET << 4) | (qos << 1) | retain;
-    umqtt_encode_remlen(remlen, &p);
+    *p++ = (UMQTT_PUBLISH_PACKET << 4) | (dup & 0x1 << 3) | (qos << 1) | retain;
+    umqtt_encode_remlen(remlen - remlen_bytes - UMQTT_PKT_HDR_LEN, &p);
 
     UMQTT_PUT_STRING(p, strlen(topic), topic);
 
@@ -626,7 +641,7 @@ static int __umqtt_publish(struct umqtt_client *cl, uint16_t mid, const char *to
 
     memcpy(p, payload, payloadlen);
 
-    ustream_write(cl->us, (const char *)buf, remlen + 2, false);
+    ustream_write(cl->us, (const char *)buf, remlen, false);
     free(buf);
     return 0;
 }

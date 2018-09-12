@@ -16,19 +16,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  * USA
  */
+ 
+#ifndef _UTILS_H
+#define _UTILS_H
 
-#ifndef _UMQTT_CONFIG_H
-#define _UMQTT_CONFIG_H
+#include <stddef.h>
+#include <stdbool.h>
+#include <inttypes.h>
 
-#define UMQTT_VERSION_MAJOR @UMQTT_VERSION_MAJOR@
-#define UMQTT_VERSION_MINOR @UMQTT_VERSION_MINOR@
-#define UMQTT_VERSION_PATCH @UMQTT_VERSION_PATCH@
-#define UMQTT_VERSION_STRING "@UMQTT_VERSION_MAJOR@.@UMQTT_VERSION_MINOR@.@UMQTT_VERSION_PATCH@"
+#include "config.h"
 
-#define UMQTT_SSL_SUPPORT	@UMQTT_SSL_SUPPORT_CONFIG@
+#ifndef container_of
+#define container_of(ptr, type, member)                 \
+    ({                              \
+        const __typeof__(((type *) NULL)->member) *__mptr = (ptr);  \
+        (type *) ((char *) __mptr - offsetof(type, member));    \
+    })
+#endif
 
-#define UMQTT_HAVE_OPENSSL 	@UMQTT_HAVE_OPENSSL_CONFIG@
-#define UMQTT_HAVE_WOLFSSL 	@UMQTT_HAVE_WOLFSSL_CONFIG@
-#define UMQTT_HAVE_MBEDTLS 	@UMQTT_HAVE_MBEDTLS_CONFIG@
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#endif
+
+int tcp_connect(const char *host, int port, int flags, bool *inprogress, int *eai);
 
 #endif

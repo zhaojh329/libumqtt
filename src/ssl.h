@@ -16,30 +16,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  * USA
  */
- 
-#ifndef _HELPERS_H
-#define _HELPERS_H
 
-#include <inttypes.h>
-#include <stdbool.h>
+#ifndef _UMQTT_SSL_H
+#define _UMQTT_SSL_H
+
+#include <stdint.h>
+#include <sys/types.h>
+
 #include "config.h"
 
-#define UMQTT_CLR_BITS(byte, pos, bits)	byte &= ~(((2 << (bits - 1)) - 1) << pos)
-#define UMQTT_SET_BITS(byte, val, pos)		byte |= val << pos
+#if UMQTT_SSL_SUPPORT
 
-#define UMQTT_PUT_U16(buf, num) 			\
- 	do {									\
- 		*((uint16_t *)buf) = htons(num);	\
- 		buf += 2;							\
- 	} while (0)
+struct umqtt_ssl_ctx;
 
-#define UMQTT_GET_U16(buf)	ntohs(*(uint16_t *)&buf[0]);
+int umqtt_ssl_init(struct umqtt_ssl_ctx **ctx, int sock);
+int umqtt_ssl_handshake(struct umqtt_ssl_ctx *ctx);
+void umqtt_ssl_free(struct umqtt_ssl_ctx *ctx);
 
-#define UMQTT_PUT_STRING(buf, len, str) 	\
- 	do {									\
- 		UMQTT_PUT_U16(buf, len);			\
- 		memcpy(buf, str, len); 				\
- 		buf += len;							\
- 	} while (0)
+int umqtt_ssl_read(int fd, void *buf, size_t count, void *arg);
+int umqtt_ssl_write(int fd, void *buf, size_t count, void *arg);
+
+#endif
 
 #endif

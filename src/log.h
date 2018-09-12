@@ -17,24 +17,23 @@
  * USA
  */
  
-#ifndef _LOG_H
-#define _LOG_H
+#ifndef _UMQTT_LOG_H
+#define _UMQTT_LOG_H
 
-#include <errno.h>
-#include <libubox/ulog.h>
+#include <syslog.h>
+#include <string.h>
+
+void umqtt_log_threshold(int threshold);
+void umqtt_log_close();
 
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
-/*
- * Use the syslog output log and include the name and number of rows at the call
- */
-#define umqtt_log(priority, syserr, fmt...) __umqtt_log(__FILENAME__, __LINE__, priority, syserr, fmt)
+#define umqtt_log(priority, fmt...) __umqtt_log(__FILENAME__, __LINE__, priority, fmt)
 
-#define umqtt_log_debug(fmt...)     umqtt_log(LOG_DEBUG, 0, fmt)
-#define umqtt_log_info(fmt...)      umqtt_log(LOG_INFO, 0, fmt)
-#define umqtt_log_err(fmt...)       umqtt_log(LOG_ERR, 0, fmt)
- #define umqtt_log_serr(fmt...)     umqtt_log(LOG_ERR, errno, fmt)
+#define umqtt_log_debug(fmt...)     umqtt_log(LOG_DEBUG, fmt)
+#define umqtt_log_info(fmt...)      umqtt_log(LOG_INFO, fmt)
+#define umqtt_log_err(fmt...)       umqtt_log(LOG_ERR, fmt)
 
-void  __umqtt_log(const char *filename, int line, int priority, int syserr, const char *fmt, ...);
+void  __umqtt_log(const char *filename, int line, int priority, const char *fmt, ...);
 
 #endif

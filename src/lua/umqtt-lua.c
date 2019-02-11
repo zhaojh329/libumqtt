@@ -297,29 +297,29 @@ static void on_reconnect(struct umqtt_t *u)
 static void client_set_options(lua_State *L, struct umqtt_t *u)
 {
 	u->L = L;
-	u->host = lua_tcheck_string(L, 1, "host");
+	u->host = strdup(lua_tcheck_string(L, 1, "host"));
 	u->port = lua_topt_int(L, 1, "port", 1883);
 	
 	lua_getfield(L, 1, "ssl");
 	if (lua_istable(L, -1)) {
 		u->ssl_enable = true;
-		u->ssl_crt_file = lua_tcheck_string(L, -1, "cert_file");
+		u->ssl_crt_file = strdup(lua_tcheck_string(L, -1, "cert_file"));
 		u->ssl_verify = lua_topt_bool(L, -1, "verify", true);
 	}
 	lua_pop(L, 1);
 
 	lua_getfield(L, 1, "will");
 	if (lua_istable(L, -1)) {
-		u->will.topic = lua_tcheck_string(L, -1, "topic");
-		u->will.payload = lua_tcheck_string(L, -1, "payload");
+		u->will.topic = strdup(lua_tcheck_string(L, -1, "topic"));
+		u->will.payload = strdup(lua_tcheck_string(L, -1, "payload"));
 		u->will.retain = lua_topt_bool(L, -1, "retain", false);
 		u->will.qos = lua_topt_int(L, -1, "qos", 0);
 	}
 	lua_pop(L, 1);
 
-	u->options.client_id = lua_topt_string(L, 1, "client_id", "umqtt-Lua-client");
-	u->options.username = lua_topt_string(L, 1, "username", NULL);
-	u->options.password = lua_topt_string(L, 1, "password", NULL);
+	u->options.client_id = strdup(lua_topt_string(L, 1, "client_id", "umqtt-Lua-client"));
+	u->options.username = strdup(lua_topt_string(L, 1, "username", NULL));
+	u->options.password = strdup(lua_topt_string(L, 1, "password", NULL));
 	u->options.clean_session = lua_topt_bool(L, 1, "clean_session", false);
 	u->ping_interval = lua_topt_int(L, 1, "ping_interval", UMQTT_PING_INTERVAL);
 	u->retry_interval = lua_topt_int(L, 1, "retry_interval", UMQTT_RETRY_INTERVAL);

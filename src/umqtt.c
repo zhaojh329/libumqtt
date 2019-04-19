@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <netdb.h>
+#include <stdio.h>
 
 #include "ssl.h"
 #include "utils.h"
@@ -310,13 +311,19 @@ static void umqtt_encode_remlen(uint32_t remlen, struct buffer *wb)
 static int umqtt_connect(struct umqtt_client *cl, struct umqtt_connect_opts *opts)
 {
     struct buffer *wb = &cl->wb;
+    char client_id[128] = "";
     uint32_t remlen = 10;
     uint8_t flags = 0;
     bool will = false;
 
+    if (opts->client_id)
+        strncpy(client_id, opts->client_id, sizeof(client_id) - 1);
+    else
+        sprintf(client_id, "umqtt-%f", ev_now(cl->loop));
+
     cl->keep_alive = opts->keep_alive > 0 ? opts->keep_alive : UMQTT_KEEP_ALIVE_DEFAULT;
 
-    remlen += strlen(opts->client_id) + 2;
+    remlen += strlen(client_id) + 2;
 
     flags |= opts->clean_session << 1;
 
@@ -354,7 +361,7 @@ static int umqtt_connect(struct umqtt_client *cl, struct umqtt_connect_opts *opt
 
     buffer_put_u8(wb, flags);
     buffer_put_u16(wb, htons(opts->keep_alive));
-    umqtt_put_string(wb, opts->client_id);
+    umqtt_put_string(wb, client_id);
 
     if (will) {
         umqtt_put_string(wb, opts->will_topic);

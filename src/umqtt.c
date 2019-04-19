@@ -23,7 +23,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include <netdb.h>
-#include <assert.h>
 
 #include "ssl.h"
 #include "utils.h"
@@ -782,31 +781,24 @@ static void umqtt_io_write_cb(struct ev_loop *loop, struct ev_io *w, int revents
         ev_io_stop(loop, w);
 }
 
-struct umqtt_client *umqtt_new(struct ev_loop *loop, const char *host, int port, bool ssl)
+int umqtt_init(struct umqtt_client *cl, struct ev_loop *loop, const char *host, int port, bool ssl)
 {
-    struct umqtt_client *cl = NULL;
     int sock = -1;
     int eai;
+
+    memset(cl, 0, sizeof(struct umqtt_client));
 
     sock = tcp_connect(host, port, SOCK_NONBLOCK | SOCK_CLOEXEC, NULL, &eai);
     if (sock < 0) {
         umqtt_log_err("tcp_connect failed: %s\n", strerror(errno));
-        return NULL;
+        return -1;
     } else if (sock == 0) {
         umqtt_log_err("tcp_connect failed: %s\n", gai_strerror(eai));
-        return NULL;
+        return -1;
     }
 
-    cl = calloc(1, sizeof(struct umqtt_client));
-    if (!cl) {
-        umqtt_log_err("calloc failed: %s\n", strerror(errno));
-        goto err;
-    }    
+    cl->loop = loop ? loop : EV_DEFAULT;
 
-    if (!loop)
-        loop = EV_DEFAULT;
-
-    cl->loop = loop;
     cl->sock = sock;
     cl->connect = umqtt_connect;
     cl->subscribe = umqtt_subscribe;
@@ -814,36 +806,44 @@ struct umqtt_client *umqtt_new(struct ev_loop *loop, const char *host, int port,
     cl->publish = umqtt_publish;
     cl->ping = umqtt_ping;
     cl->disconnect = umqtt_disconnect;
-
-    cl->start_time = ev_now(loop);
+    cl->start_time = ev_now(cl->loop);
 
     if (ssl) {
 #if (UMQTT_SSL_SUPPORT)
         umqtt_ssl_init((struct umqtt_ssl_ctx **)&cl->ssl, cl->sock);
 #else
         umqtt_log_err("SSL is not enabled at compile\n");
-        goto err;
+        umqtt_free(cl);
+        return -1;
 #endif
     }
 
     ev_io_init(&cl->iow, umqtt_io_write_cb, sock, EV_WRITE);
-    ev_io_start(loop, &cl->iow);
+    ev_io_start(cl->loop, &cl->iow);
 
     ev_io_init(&cl->ior, umqtt_io_read_cb, sock, EV_READ);
-    ev_io_start(loop, &cl->ior);
+    ev_io_start(cl->loop, &cl->ior);
 
     ev_timer_init(&cl->timer, umqtt_timer_cb, 1.0, 0.2);
     ev_timer_start(cl->loop, &cl->timer);
 
-    return cl;
-
-err:
-    if (sock > 0)
-        close(sock);
-
-    if (cl)
-        free(cl);
-
-    return NULL;
+    return 0;
 }
 
+struct umqtt_client *umqtt_new(struct ev_loop *loop, const char *host, int port, bool ssl)
+{
+    struct umqtt_client *cl;
+
+    cl = malloc(sizeof(struct umqtt_client));
+    if (!cl) {
+        umqtt_log_err("malloc failed: %s\n", strerror(errno));
+        return NULL;
+    }
+
+    if (umqtt_init(cl, loop, host, port, ssl) < 0) {
+        free(cl);
+        return NULL;
+    }
+
+    return cl;
+}

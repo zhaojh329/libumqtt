@@ -179,6 +179,7 @@ struct umqtt_client {
     void (*on_pingresp)(struct umqtt_client *cl);
 };
 
+int umqtt_init(struct umqtt_client *cl, struct ev_loop *loop, const char *host, int port, bool ssl);
 struct umqtt_client *umqtt_new(struct ev_loop *loop, const char *host, int port, bool ssl);
 
 #endif

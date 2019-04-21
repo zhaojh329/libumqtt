@@ -17,47 +17,38 @@
 [![Release Version][7]][8]
 [![Build Status][9]][10]
 
-[libubox]: https://git.openwrt.org/?p=project/libubox.git
-[ustream-ssl]: https://git.openwrt.org/?p=project/ustream-ssl.git
+[libev]: http://software.schmorp.de/pkg/libev.html
 [openssl]: https://github.com/openssl/openssl
 [mbedtls]: https://github.com/ARMmbed/mbedtls
 [CyaSSl(wolfssl)]: https://github.com/wolfSSL/wolfssl
 
-A Lightweight and fully asynchronous MQTT 3.1.1 client C library based on libubox for Embedded Linux.
+A Lightweight and fully asynchronous MQTT 3.1.1 client C library based on [libev] for Embedded Linux.
 Support QoS 0, 1 and 2. Support ssl. And it also supports Lua API.
 
 `Keep Watching for More Actions on This Space`
 
 # Dependencies
-* [libubox]
-* [ustream-ssl] - If you need to support SSL
+* [libev]
 * [mbedtls] - If you choose mbedtls as your SSL backend
 * [CyaSSl(wolfssl)] - If you choose wolfssl as your SSL backend
 * [openssl] - If you choose openssl as your SSL backend
 
 
-# How to build and install
-## For Linux distribution: Ubuntu, Debian, ArchLinux, Centos
+# Install dependent packages
 
-    wget -qO- https://raw.githubusercontent.com/zhaojh329/libumqtt/master/tools/install.sh | sudo bash
+    sudo apt int libev-dev libssl-dev liblua5.2-dev
 
+# Configure
+See which configuration are supported
 
-Build example
-    
-    git clone https://github.com/zhaojh329/libumqtt.git
-    cd libumqtt && cmake . && make
+	~/libumqtt/$ mkdir build && cd build
+	~/libumqtt/build$ cmake .. -L
+	~/libumqtt/build$ cmake .. -LH
 
-Run example
+# Build and install
 
-	./example/helloworld
-
-## For Embedded Linux Platform
-You need to cross compiling by yourself
+	~/libumqtt/build$ make && sudo make install
 
 # Contributing
 If you would like to help making [libumqtt](https://github.com/zhaojh329/libumqtt) better,
 see the [CONTRIBUTING.md](/CONTRIBUTING.md) file.
-
-# QQ group: 153530783
-
-# If the project is helpful to you, please do not hesitate to star. Thank you!

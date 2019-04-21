@@ -20,77 +20,85 @@
 #ifndef _UMQTT_H
 #define _UMQTT_H
 
-#include <libubox/uloop.h>
-#include <libubox/ustream.h>
-#include <libubox/avl.h>
+#include <ev.h>
+#include <stdint.h>
+#include <stdbool.h>
 
+#include "log.h"
+#include "utils.h"
 #include "config.h"
+#include "buffer.h"
 
-#if (UMQTT_SSL_SUPPORT)
-#include <dlfcn.h>
-#include <libubox/ustream-ssl.h>
-#endif
-
-#define UMQTT_PKT_HDR_LEN 1
-#define UMQTT_PKT_MID_LEN 2
+#define UMQTT_PKT_HDR_LEN   1
+#define UMQTT_PKT_MID_LEN   2
 #define UMQTT_PKT_TOPIC_LEN 2
 
-#define UMQTT_KEEP_ALIVE 30
-#define UMQTT_RETRY_INTERVAL  1
-#define UMQTT_PING_INTERVAL  30
+#define UMQTT_KEEP_ALIVE_DEFAULT    30
+#define UMQTT_MAX_CONNECT_TIME      5  /* second */
 
-#define UMQTT_MAX_REMLEN 268435455 
+#define UMQTT_MAX_REMLEN            268435455
 
-enum umqtt_packet_type {
-    UMQTT_NO_PACKET,
-    UMQTT_CONNECT_PACKET,
-    UMQTT_CONNACK_PACKET,
-    UMQTT_PUBLISH_PACKET,
-    UMQTT_PUBACK_PACKET,
-    UMQTT_PUBREC_PACKET,
-    UMQTT_PUBREL_PACKET,
-    UMQTT_PUBCOMP_PACKET,
-    UMQTT_SUBSCRIBE_PACKET,
-    UMQTT_SUBACK_PACKET,
-    UMQTT_UNSUBSCRIBE_PACKET,
-    UMQTT_UNSUBACK_PACKET,
-    UMQTT_PINGREQ_PACKET,
-    UMQTT_PINGRESP_PACKET,
-    UMQTT_DISCONNECT_PACKET
+/* MQTT Control Packet type */
+enum {
+    UMQTT_CONNECT = 1,  /* Client request to connect to Server */
+    UMQTT_CONNACK,      /* Connect acknowledgment */
+    UMQTT_PUBLISH,      /* Publish message */
+    UMQTT_PUBACK,       /* Publish acknowledgment */
+    UMQTT_PUBREC,       /* Publish received (assured delivery part 1) */
+    UMQTT_PUBREL,       /* Publish release (assured delivery part 2) */
+    UMQTT_PUBCOMP,      /* Publish complete (assured delivery part 3) */
+    UMQTT_SUBSCRIBE,    /* Client subscribe request */
+    UMQTT_SUBACK,       /* Subscribe acknowledgment */
+    UMQTT_UNSUBSCRIBE,  /* Unsubscribe request */
+    UMQTT_UNSUBACK,     /* Unsubscribe acknowledgment */
+    UMQTT_PINGREQ,      /* PING request */
+    UMQTT_PINGRESP,     /* PING response */
+    UMQTT_DISCONNECT    /* Client is disconnecting */
 };
 
-enum umqtt_return_code {
-    UMQTT_CONNECTION_ACCEPTED = 0,
-    UMQTT_UNACCEPTABLE_PROTOCOL = 1,
-    UMQTT_IDENTIFIER_REJECTED = 2,
-    UMQTT_SERVER_UNAVAILABLE = 3,
-    UMQTT_BAD_USERNAME_OR_PASSWORD = 4,
-    UMQTT_NOT_AUTHORIZED = 5
+/* Connect Return code */
+enum {
+    UMQTT_CONNECTION_ACCEPTED,      /* Connection accepted */
+    UMQTT_UNACCEPTABLE_PROTOCOL,    /* Connection Refused, unacceptable protocol version */
+    UMQTT_IDENTIFIER_REJECTED,      /* Connection Refused, identifier rejected */
+    UMQTT_SERVER_UNAVAILABLE,       /* Connection Refused, Server unavailable */
+    UMQTT_BAD_USERNAME_OR_PASSWORD, /* Connection Refused, bad user name or password */
+    UMQTT_NOT_AUTHORIZED            /* Connection Refused, not authorized */
 };
 
-enum umqtt_error_code {
-    UMQTT_ERROR_WRITE,
-    UMQTT_ERROR_SSL,
+enum {
+    UMQTT_QOS0,
+    UMQTT_QOS1,
+    UMQTT_QOS2
+};
+
+/* Parse result code */
+enum {
+    UMQTT_PARSE_PEND,   /* Not a complete MQTT packet, need more data */
+    UMQTT_PARSE_OK      /* Parse complete, it's a complete MQTT packet */
+};
+
+/* State of the MQTT client */
+enum {
+    UMQTT_STATE_CONNECTING,     /* Socket connection in progress */
+    UMQTT_STATE_SSL_HANDSHAKE,  /* SSL handshake in progress */
+    UMQTT_STATE_PARSE_FH,       /* Parse fixed header */
+    UMQTT_STATE_PARSE_REMLEN,   /* Parse remaining Length */
+    UMQTT_STATE_HANDLE_PACKET   /* Handle packet */
+};
+
+enum {
+    UMQTT_ERROR_SSL_HANDSHAKE,
     UMQTT_ERROR_SSL_INVALID_CERT,
-    UMQTT_ERROR_SSL_CN_MISMATCH,
     UMQTT_REMAINING_LENGTH_MISMATCH,
     UMQTT_REMAINING_LENGTH_OVERFLOW,
-    UMQTT_INVALID_PACKET
+    UMQTT_INVALID_PACKET,
+    UMQTT_ERROR_CONNECT,
+    UMQTT_ERROR_IO,
+    UMQTT_ERROR_PING_TIMEOUT
 };
 
-enum parse_state {
-    PARSE_STATE_FH,         /* Fixed header */
-    PARSE_STATE_REMLEN,     /* Remaining Length */
-    PARSE_STATE_HANDLE      /* handle packet */
-};
-
-struct umqtt_topic {
-    uint16_t len;
-    char *topic;
-    uint8_t qos;
-};
-
-enum umqtt_msg_state {
+enum {
     umqtt_ms_invalid,
     umqtt_ms_publish_qos0,
     umqtt_ms_publish_qos1,
@@ -105,82 +113,73 @@ enum umqtt_msg_state {
     umqtt_ms_queued
 };
 
-struct umqtt_message {
-    time_t timestamp;
-    enum umqtt_msg_state state;
-    bool dup;
-    bool retain;
-    uint8_t qos;
-    uint16_t mid;
-    char *topic;
-    uint32_t payloadlen;
-    void *payload;
-    struct avl_node avl;
-};
-
 struct umqtt_packet {
     uint8_t type;
+    uint8_t flags;
     uint32_t remlen;
-    uint16_t mid;
     struct umqtt_message *msg;
 };
 
-struct umqtt_will {
-    const char *topic;
-    uint8_t qos;
-    bool retain;
-    const char *payload;
-};
-
-struct umqtt_options {
+struct umqtt_connect_opts {
     bool clean_session;
     uint16_t keep_alive;
     const char *client_id;
     const char *username;
     const char *password;
+
+    const char *will_topic;
+    const char *will_message;
+    uint8_t will_qos;
+    bool will_retain;
+};
+
+struct umqtt_topic {
+    const char *topic;
+    uint8_t qos;
 };
 
 struct umqtt_client {
-    struct ustream *us;
-    struct ustream_fd sfd;
+    int sock;
+    struct ev_loop *loop;
+    struct ev_io ior;
+    struct ev_io iow;
+    struct buffer rb;
+    struct buffer wb;
+    int state;
+    void *ssl;              /* Context wrap of openssl, wolfssl and mbedtls */
+
+    ev_tstamp start_time;   /* Time stamp of begin connect */
+    ev_tstamp last_ping;    /* Time stamp of last ping */
+    int ntimeout;           /* Number of timeouts */
+
+    struct ev_timer timer;
+
+    bool connection_accepted;       /* Received the conack packet and returns UMQTT_CONNECTION_ACCEPTED */
     struct umqtt_packet pkt;
-    struct uloop_timeout ping_timer;
-    struct uloop_timeout retry_timer;
-    int ping_timer_interval;
-    int retry_timer_interval;
-    enum umqtt_error_code error;
-    enum parse_state ps;
-    bool wait_pingresp;
-    struct avl_tree in_queue;
-    struct avl_tree out_queue;
+    uint16_t keep_alive;
+    bool wait_pingresp;             /* Wait PINGRESP */
+    uint8_t mid[65536];            /* used to generate message id */
 
-#if (UMQTT_SSL_SUPPORT)
-    bool ssl_require_validation;
-    struct ustream_ssl ussl;
-    struct ustream_ssl_ctx *ssl_ctx;
-    const struct ustream_ssl_ops *ssl_ops;
-#endif
-
-    int (*connect)(struct umqtt_client *cl, struct umqtt_options *opts, struct umqtt_will *will);
+    int (*connect)(struct umqtt_client *cl, struct umqtt_connect_opts *opts);
     int (*subscribe)(struct umqtt_client *cl, struct umqtt_topic *topics, int num);
-    int (*unsubscribe)(struct umqtt_client *cl, struct umqtt_topic *topics, int num);
-    int (*publish)(struct umqtt_client *cl, const char *topic, uint32_t payloadlen, const void *payload, uint8_t qos, bool retain);
+    int (*unsubscribe)(struct umqtt_client *cl, const char **topics, int num);
+    int (*publish)(struct umqtt_client *cl, const char *topic, const void *payload, uint32_t payloadlen,
+        uint8_t qos, bool retain);
     void (*ping)(struct umqtt_client *cl);
     void (*disconnect)(struct umqtt_client *cl);
-    void (*on_conack)(struct umqtt_client *cl, bool sp, enum umqtt_return_code code);
-    void (*on_suback)(struct umqtt_client *cl, uint16_t mid, uint8_t *granted_qos, int qos_count);
-    void (*on_publish)(struct umqtt_client *cl, struct umqtt_message *msg);
-    void (*on_error)(struct umqtt_client *cl);
+
+    void (*on_net_connected)(struct umqtt_client *cl);
+    void (*on_conack)(struct umqtt_client *cl, bool sp, int code);
+    void (*on_suback)(struct umqtt_client *cl, uint8_t *granted_qos, int qos_count);
+    void (*on_unsuback)(struct umqtt_client *cl);
+    void (*on_publish)(struct umqtt_client *cl, const char *topic, int topic_len,
+            const void *payload, int payloadlen);
+    void (*on_error)(struct umqtt_client *cl, int err, const char *msg);
     void (*on_close)(struct umqtt_client *cl);
-    void (*on_pong)(struct umqtt_client *cl);
-    void (*free)(struct umqtt_client *cl);
+    void (*on_pingresp)(struct umqtt_client *cl);
 };
 
-int umqtt_new_ssl(struct umqtt_client *cl, const char *host, int port, bool ssl, const char *ca_crt_file, bool verify);
-
-static inline int umqtt_new(struct umqtt_client *cl, const char *host, int port)
-{
-    return umqtt_new_ssl(cl, host, port, false, NULL, false);
-}
+int umqtt_init(struct umqtt_client *cl, struct ev_loop *loop, const char *host, int port, bool ssl);
+struct umqtt_client *umqtt_new(struct ev_loop *loop, const char *host, int port, bool ssl);
 
 #endif

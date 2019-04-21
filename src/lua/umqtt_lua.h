@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2017 Jianhui Zhao <jianhuizhao329@gmail.com>
+ * Copyright (c) 2018 Petr Stetiar <ynezz@true.cz>
+ * Copyright (C) 2019 Jianhui Zhao <jianhuizhao329@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,18 +18,36 @@
  * USA
  */
 
-#ifndef _UMQTT_CONFIG_H
-#define _UMQTT_CONFIG_H
+#ifndef __UMQTT_LUA_H
+#define __UMQTT_LUA_H
 
-#define UMQTT_VERSION_MAJOR @UMQTT_VERSION_MAJOR@
-#define UMQTT_VERSION_MINOR @UMQTT_VERSION_MINOR@
-#define UMQTT_VERSION_PATCH @UMQTT_VERSION_PATCH@
-#define UMQTT_VERSION_STRING "@UMQTT_VERSION_MAJOR@.@UMQTT_VERSION_MINOR@.@UMQTT_VERSION_PATCH@"
+#include <lauxlib.h>
+#include <lualib.h>
 
-#define UMQTT_SSL_SUPPORT	@UMQTT_SSL_SUPPORT_CONFIG@
+#include "umqtt.h"
 
-#define UMQTT_HAVE_OPENSSL 	@UMQTT_HAVE_OPENSSL_CONFIG@
-#define UMQTT_HAVE_WOLFSSL 	@UMQTT_HAVE_WOLFSSL_CONFIG@
-#define UMQTT_HAVE_MBEDTLS 	@UMQTT_HAVE_MBEDTLS_CONFIG@
+/* Compatibility defines */
+#if LUA_VERSION_NUM <= 501
+
+/* NOTE: this only works if nups == 0! */
+#define luaL_setfuncs(L, fns, nups) luaL_register((L), NULL, (fns))
+
+#endif
+
+struct umqtt_client_lua {
+    lua_State *L;
+
+    struct umqtt_client cli;
+    struct umqtt_connect_opts opts;
+    bool connected;
+
+    int on_conack_ref;
+    int on_suback_ref;
+    int on_unsuback_ref;
+    int on_publish_ref;
+    int on_pingresp_ref;
+    int on_error_ref;
+    int on_close_ref;
+};
 
 #endif

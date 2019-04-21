@@ -525,6 +525,7 @@ static void umqtt_timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents
         if (now - cl->last_ping < 3)
             return;
 
+        cl->wait_pingresp = false;
         umqtt_log_err("ping timeout %d\n", ++cl->ntimeout);
         if (cl->ntimeout > 2) {
             umqtt_error(cl, UMQTT_ERROR_PING_TIMEOUT, "ping timeout");

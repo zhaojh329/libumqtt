@@ -8,7 +8,7 @@ set(UMQTT_VERSION_PATCH 0)
 # Check the third party Libraries
 find_package(Libev REQUIRED)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ${LIBEV_INCLUDE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR} ${LIBEV_INCLUDE_DIR})
 
 set(EXTRA_LIBS ${LIBEV_LIBRARY} dl)
 set(SOURCE_FILES umqtt.c log.c utils.c buffer.c ssl.c)
@@ -92,13 +92,12 @@ target_link_libraries(umqtt ${EXTRA_LIBS})
 # configure a header file to pass some of the CMake settings to the source code
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
-#add_subdirectory(lua)
+add_subdirectory(lua)
 
 install(
     FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/log.h
         ${CMAKE_CURRENT_SOURCE_DIR}/ssl.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/avl.h
         ${CMAKE_CURRENT_SOURCE_DIR}/umqtt.h
         ${CMAKE_CURRENT_SOURCE_DIR}/utils.h
         ${CMAKE_CURRENT_SOURCE_DIR}/buffer.h

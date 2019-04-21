@@ -46,9 +46,11 @@ struct umqtt_ssl_ctx {
 
 #if UMQTT_HAVE_OPENSSL
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 #elif UMQTT_HAVE_WOLFSSL
 #define WC_NO_HARDEN
 #include <wolfssl/openssl/ssl.h>
+#include <wolfssl/openssl/err.h>
 #endif
 
 struct umqtt_ssl_ctx {
@@ -122,6 +124,7 @@ int umqtt_ssl_handshake(struct umqtt_ssl_ctx *ctx)
         int err = SSL_get_error(ctx->ssl, ret);
         if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
             return 0;
+        umqtt_log_err("%s\n", ERR_error_string(err, NULL));
         return -1;
     }
 #endif
@@ -167,6 +170,7 @@ int umqtt_ssl_read(int fd, void *buf, size_t count, void *arg)
         int err = SSL_get_error(ctx->ssl, ret);
         if (err == SSL_ERROR_WANT_READ)
             return P_FD_PENDING;
+        umqtt_log_err("%s\n", ERR_error_string(err, NULL));
         return P_FD_ERR;
     }
 #endif
@@ -189,6 +193,7 @@ int umqtt_ssl_write(int fd, void *buf, size_t count, void *arg)
         int err = SSL_get_error(ctx->ssl, ret);
         if (err == SSL_ERROR_WANT_WRITE)
             return P_FD_PENDING;
+        umqtt_log_err("%s\n", ERR_error_string(err, NULL));
         return P_FD_ERR;
     }
 #endif

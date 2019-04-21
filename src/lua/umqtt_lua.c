@@ -174,48 +174,51 @@ static void on_net_connected(struct umqtt_client *cli)
         ev_break(cli->loop, EVBREAK_ALL);
 }
 
+static const char *get_opt_string(lua_State *L, int index, const char *key)
+{
+    const char *value;
+
+    lua_getfield(L, index, key);
+    value = lua_tostring(L, -1);
+
+    if (value)
+        return strdup(value);
+    return NULL;
+}
+
+static bool get_opt_boolean(lua_State *L, int index, const char *key)
+{
+    lua_getfield(L, index, key);
+    return lua_toboolean(L, -1);
+}
+
+static int get_opt_integer(lua_State *L, int index, const char *key)
+{
+    lua_getfield(L, index, key);
+    return lua_tointeger(L, -1);
+}
+
 static void parse_options(lua_State *L, const char **host, int *port, bool *ssl, struct umqtt_connect_opts *opts)
 {
     lua_getfield(L, 1, "host");
     *host = lua_tostring(L, -1);
+    *port = get_opt_integer(L, 1, "port");
+    *ssl = get_opt_boolean(L, 1, "ssl");
 
-    lua_getfield(L, 1, "port");
-    *port = lua_tointeger(L, -1);
-
-    lua_getfield(L, 1, "ssl");
-    *ssl = lua_toboolean(L, -1);
-
-    lua_getfield(L, 1, "clean_session");
-    opts->clean_session = lua_toboolean(L, -1);
-
-    lua_getfield(L, 1, "keep_alive");
-    opts->keep_alive = lua_tointeger(L, -1);
-
-    lua_getfield(L, 1, "client_id");
-    opts->client_id = lua_tostring(L, -1);
-
-    lua_getfield(L, 1, "username");
-    opts->username = lua_tostring(L, -1);
-
-    lua_getfield(L, 1, "password");
-    opts->password = lua_tostring(L, -1);
+    opts->clean_session = get_opt_boolean(L, 1, "clean_session");
+    opts->keep_alive = get_opt_integer(L, 1, "keep_alive");
+    opts->client_id = get_opt_string(L, 1, "client_id");
+    opts->username = get_opt_string(L, 1, "username");
+    opts->password = get_opt_string(L, 1, "password");
 
     lua_pop(L, 8);
 
     lua_getfield(L, 1, "will");
     if (lua_istable(L, -1)) {
-        lua_getfield(L, 3, "topic");
-        opts->will_topic = lua_tostring(L, -1);
-
-        lua_getfield(L, 3, "message");
-        opts->will_message = lua_tostring(L, -1);
-
-        lua_getfield(L, 3, "qos");
-        opts->will_qos = lua_tointeger(L, -1);
-
-        lua_getfield(L, 3, "retain");
-        opts->will_retain = lua_toboolean(L, -1);
-
+        opts->will_topic = get_opt_string(L, 3, "topic");
+        opts->will_message = get_opt_string(L, 3, "message");
+        opts->will_qos = get_opt_integer(L, -3, "qos");
+        opts->will_retain = get_opt_boolean(L, 1, "retain");
         lua_pop(L, 5);
     }
 }
@@ -414,8 +417,21 @@ static int umqtt_lua_gc(lua_State *L)
 	struct umqtt_client_lua *cl = luaL_checkudata(L, 1, UMQTT_MT);
 
     if (cl->connected) {
+        struct umqtt_connect_opts *opts = &cl->opts;
+
         cl->cli.disconnect(&cl->cli);
         cl->connected = false;
+
+        if (opts->client_id)
+            free((char *)opts->client_id);
+        if (opts->username)
+            free((char *)opts->username);
+        if (opts->password)
+            free((char *)opts->password);
+        if (opts->will_topic)
+            free((char *)opts->will_topic);
+        if (opts->will_message)
+            free((char *)opts->will_message);
     }
 
     return 0;

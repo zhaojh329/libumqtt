@@ -34,6 +34,8 @@ struct config {
     struct umqtt_connect_opts options;
 };
 
+static struct ev_timer reconnect_timer;
+
 static struct config cfg = {
     .host = "localhost",
     .port = 1883,
@@ -46,6 +48,17 @@ static struct config cfg = {
         .will_message = "will test"
     }
 };
+
+static void start_reconnect(struct ev_loop *loop)
+{
+    if (!cfg.auto_reconnect) {
+        ev_break(loop, EVBREAK_ALL);
+        return;
+    }
+
+    ev_timer_set(&reconnect_timer, RECONNECT_INTERVAL, 0.0);
+    ev_timer_start(loop, &reconnect_timer);
+}
 
 static void on_conack(struct umqtt_client *cl, bool sp, int code)
 {
@@ -111,14 +124,17 @@ static void on_pingresp(struct umqtt_client *cl)
 static void on_error(struct umqtt_client *cl, int err, const char *msg)
 {
     umqtt_log_err("on_error: %d: %s\n", err, msg);
-    ev_break(cl->loop, EVBREAK_ALL);
+
+    start_reconnect(cl->loop);
+    free(cl);
 }
 
 static void on_close(struct umqtt_client *cl)
 {
     umqtt_log_info("on_close\n");
 
-    ev_break(cl->loop, EVBREAK_ALL);
+    start_reconnect(cl->loop);
+    free(cl);
 }
 
 static void on_net_connected(struct umqtt_client *cl)
@@ -127,23 +143,37 @@ static void on_net_connected(struct umqtt_client *cl)
 
     if (cl->connect(cl, &cfg.options) < 0) {
         umqtt_log_err("connect failed\n");
-        ev_break(cl->loop, EVBREAK_ALL);
+
+        start_reconnect(cl->loop);
+        free(cl);
     }
+}
+
+static void do_connect(struct ev_loop *loop, struct ev_timer *w, int revents)
+{
+    struct umqtt_client *cl;
+
+    cl = umqtt_new(loop, cfg.host, cfg.port, cfg.ssl);
+    if (!cl) {
+        start_reconnect(loop);
+        return;
+    }
+
+    cl->on_net_connected = on_net_connected;
+    cl->on_conack = on_conack;
+    cl->on_suback = on_suback;
+    cl->on_unsuback = on_unsuback;
+    cl->on_publish = on_publish;
+    cl->on_pingresp = on_pingresp;
+    cl->on_error = on_error;
+    cl->on_close = on_close;
+
+    umqtt_log_info("Start connect...\n");
 }
 
 static void signal_cb(struct ev_loop *loop, ev_signal *w, int revents)
 {
-    struct umqtt_client *cl = w->data;
-    static bool quiting;
-
-    if (w->signum == SIGINT) {
-        const char *topics[] = {"test1", "test2", "test3"};
-
-        if (quiting)
-            return;
-        quiting = true;
-        cl->unsubscribe(cl, topics, ARRAY_SIZE(topics));
-    }
+    ev_break(loop, EVBREAK_ALL);
 }
 
 static void usage(const char *prog)
@@ -161,14 +191,12 @@ static void usage(const char *prog)
 
 int main(int argc, char **argv)
 {
-    int opt;
     struct ev_loop *loop = EV_DEFAULT;
     struct ev_signal signal_watcher;
-    struct umqtt_client *cl;
+    int opt;
 
     while ((opt = getopt(argc, argv, "h:i:p:sad")) != -1) {
-        switch (opt)
-        {
+        switch (opt) {
         case 'h':
             cfg.host = optarg;
             break;
@@ -195,30 +223,15 @@ int main(int argc, char **argv)
     if (!cfg.options.client_id)
         cfg.options.client_id = "libumqtt-Test";
 
-    umqtt_log_info("libumqttc version %s\n", UMQTT_VERSION_STRING);
-
-    cl = umqtt_new(loop, cfg.host, cfg.port, cfg.ssl);    
-    if (!cl)
-        return -1;
-
-    cl->on_net_connected = on_net_connected;
-    cl->on_conack = on_conack;
-    cl->on_suback = on_suback;
-    cl->on_unsuback = on_unsuback;
-    cl->on_publish = on_publish;
-    cl->on_pingresp = on_pingresp;
-    cl->on_error = on_error;
-    cl->on_close = on_close;
-
-    umqtt_log_info("Start connect...\n");
-
-    signal_watcher.data = cl;
     ev_signal_init(&signal_watcher, signal_cb, SIGINT);
     ev_signal_start(loop, &signal_watcher);
 
-    ev_run(loop, 0);
+    ev_timer_init(&reconnect_timer, do_connect, 0.1, 0.0);
+    ev_timer_start(loop, &reconnect_timer);
 
-    free(cl);
+    umqtt_log_info("libumqttc version %s\n", UMQTT_VERSION_STRING);
+
+    ev_run(loop, 0);
     
     return 0;
 }

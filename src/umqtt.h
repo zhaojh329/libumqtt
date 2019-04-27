@@ -167,6 +167,7 @@ struct umqtt_client {
         uint8_t qos, bool retain);
     void (*ping)(struct umqtt_client *cl);
     void (*disconnect)(struct umqtt_client *cl);
+	void (*free)(struct umqtt_client *cl);
 
     void (*on_net_connected)(struct umqtt_client *cl);
     void (*on_conack)(struct umqtt_client *cl, bool sp, int code);

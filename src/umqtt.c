@@ -814,6 +814,7 @@ int umqtt_init(struct umqtt_client *cl, struct ev_loop *loop, const char *host, 
     cl->publish = umqtt_publish;
     cl->ping = umqtt_ping;
     cl->disconnect = umqtt_disconnect;
+	cl->free = umqtt_free;
     cl->start_time = ev_now(cl->loop);
 
     if (ssl) {

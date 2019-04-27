@@ -432,6 +432,8 @@ static int umqtt_lua_gc(lua_State *L)
             free((char *)opts->will_topic);
         if (opts->will_message)
             free((char *)opts->will_message);
+
+        cl->cli.free(&cl->cli);
     }
 
     return 0;

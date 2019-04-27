@@ -38,7 +38,7 @@ local function start_reconnect()
 end
 
 do_connect = function()
-	local c = umqtt.connect({
+	local c, err = umqtt.connect({
 		host = 'localhost',
 		port = 1883,
 		ssl = false,
@@ -54,6 +54,11 @@ do_connect = function()
 			retain = true
 		}
 	})
+	
+	if not c then
+		print(loop:now(), err)
+		return
+	end
 
 	-- sp: session persistent
 	-- code: return code

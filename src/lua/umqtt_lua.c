@@ -219,8 +219,9 @@ static void parse_options(lua_State *L, const char **host, int *port, bool *ssl,
         opts->will_message = get_opt_string(L, 3, "message");
         opts->will_qos = get_opt_integer(L, -3, "qos");
         opts->will_retain = get_opt_boolean(L, 1, "retain");
+        lua_pop(L, 4);
     }
-    lua_pop(L, 5);
+    lua_pop(L, 1);
 }
 
 static int umqtt_lua_connect(lua_State *L)

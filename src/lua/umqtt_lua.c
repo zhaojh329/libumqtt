@@ -321,7 +321,7 @@ static int umqtt_lua_publish(lua_State *L)
     topic = luaL_checkstring(L, 2);
     payload = luaL_checklstring(L, 3, &payloadlen);
 
-    if (!lua_isnil(L, 4)) {
+    if (!lua_isnone(L, 4) && !lua_isnil(L, 4)) {
         luaL_checktype(L, 4, LUA_TTABLE);
 
         lua_getfield(L, 4, "qos");

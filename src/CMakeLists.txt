@@ -8,10 +8,10 @@ set(UMQTT_VERSION_PATCH 2)
 # Check the third party Libraries
 find_package(Libev REQUIRED)
 
-include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR} ${LIBEV_INCLUDE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/buffer ${CMAKE_CURRENT_BINARY_DIR} ${LIBEV_INCLUDE_DIR})
 
 set(EXTRA_LIBS ${LIBEV_LIBRARY} dl)
-set(SOURCE_FILES umqtt.c log.c utils.c buffer.c ssl.c)
+set(SOURCE_FILES umqtt.c log.c utils.c buffer/buffer.c ssl.c)
 
 set(UMQTT_SSL_SUPPORT_CONFIG 1)
 option(UMQTT_SSL_SUPPORT "SSL support" ON)
@@ -96,11 +96,11 @@ add_subdirectory(lua)
 
 install(
     FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/log.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/ssl.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/umqtt.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/utils.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/buffer.h
+        log.h
+        ssl.h
+        umqtt.h
+        utils.h
+        buffer/buffer.h
         ${CMAKE_CURRENT_BINARY_DIR}/config.h
     DESTINATION
         include/umqtt

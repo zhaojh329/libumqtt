@@ -30,6 +30,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <fcntl.h>
 
 #include "log.h"
 #include "utils.h"
@@ -81,7 +82,9 @@ int tcp_connect(const char *host, int port, int flags, bool *inprogress, int *ea
     if (!addr)
         goto free_addrinfo;
 
-    sock = socket(AF_INET, SOCK_STREAM | flags, 0);
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    int old_flags = fcntl(sock, F_GETFL);
+    fcntl(sock, F_SETFL, old_flags | flags);
     if (sock < 0)
         goto free_addrinfo;
 

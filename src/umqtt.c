@@ -801,7 +801,7 @@ int umqtt_init(struct umqtt_client *cl, struct ev_loop *loop, const char *host, 
 
     memset(cl, 0, sizeof(struct umqtt_client));
 
-    sock = tcp_connect(host, port, SOCK_NONBLOCK | SOCK_CLOEXEC, NULL, &eai);
+    sock = tcp_connect(host, port, O_NONBLOCK | O_CLOEXEC, NULL, &eai);
     if (sock < 0) {
         umqtt_log_err("tcp_connect failed: %s\n", strerror(errno));
         return -1;

@@ -5,16 +5,7 @@ os:
 
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y libjson-c-dev lua5.1 liblua5.1-0-dev quilt libssl-dev
-
-before_script:
-  - git clone https://git.openwrt.org/project/libubox.git
-  - pushd libubox && cmake . && make && sudo make install && popd
-
-  - git clone https://git.openwrt.org/project/ustream-ssl.git && pushd ustream-ssl
-  - git checkout 189cd38b4188bfcb4c8cf67d8ae71741ffc2b906
-  - quilt import ../tools/us-openssl_v1_0_1.patch && quilt push -a
-  - cmake . && make && sudo make install && popd
+  - sudo apt-get install -y lua5.1 liblua5.1-0-dev libssl-dev libev-dev
 
 script:
   - mkdir build && cd build

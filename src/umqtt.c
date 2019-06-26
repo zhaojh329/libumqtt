@@ -67,7 +67,7 @@ static void umqtt_free(struct umqtt_client *cl)
     buffer_free(&cl->wb);
 
 #if UMQTT_SSL_SUPPORT
-    umqtt_ssl_free(cl->ssl);
+     umqtt_ssl_free(cl->ssl);
 #endif
 
     if (cl->sock > 0)
@@ -646,19 +646,19 @@ static int parse_remaining_length(struct umqtt_client *cl)
     struct buffer *rb = &cl->rb;
     uint8_t *data = buffer_data(rb);
     uint32_t parsed = 0;
-    
-    while (parsed++ < buffer_length(rb)) {
-        pkt->remlen = (pkt->remlen << 6) + (*data & 0X7F);
-        if ((*data & 0x80) == 0) {
+
+    uint32_t mul = 1;
+    while (parsed < UMQTT_MAX_REMLEN_BYTES) {
+        mul = mul << 7;
+        pkt->remlen += mul * (data[parsed] & 0x7F);
+        if ((data[parsed++] & 0x80) == 0) {
             cl->state = UMQTT_STATE_HANDLE_PACKET;
             break;
         }
 
         if (pkt->remlen > UMQTT_MAX_REMLEN) {
             return -UMQTT_REMAINING_LENGTH_OVERFLOW;
-            break;
         }
-        data++;
     }
 
     buffer_pull(rb, NULL, parsed);

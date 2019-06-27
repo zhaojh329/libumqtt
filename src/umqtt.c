@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <arpa/inet.h>
 #include <fcntl.h>
 
 #include "ssl.h"
@@ -645,10 +646,11 @@ static int parse_remaining_length(struct umqtt_client *cl)
     struct umqtt_packet *pkt = &cl->pkt;
     struct buffer *rb = &cl->rb;
     uint8_t *data = buffer_data(rb);
+    size_t data_len = buffer_length(rb);
     uint32_t parsed = 0;
 
     uint32_t mul = 1;
-    while (parsed < UMQTT_MAX_REMLEN_BYTES) {
+    while (parsed < UMQTT_MAX_REMLEN_BYTES && parsed < data_len) {
         mul = mul << 7;
         pkt->remlen += mul * (data[parsed] & 0x7F);
         if ((data[parsed++] & 0x80) == 0) {

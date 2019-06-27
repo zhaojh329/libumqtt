@@ -42,6 +42,7 @@
 #define UMQTT_MAX_CONNECT_TIME      5  /* second */
 
 #define UMQTT_MAX_REMLEN            268435455
+#define UMQTT_MAX_REMLEN_BYTES      4
 
 /* MQTT Control Packet type */
 enum {

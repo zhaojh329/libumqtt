@@ -42,13 +42,15 @@ And provide Lua-binding.
 
 # Install dependent packages
 
-    sudo apt int libev-dev libssl-dev liblua5.2-dev
+    sudo apt install libev-dev libssl-dev liblua5.2-dev
 
 # Build and install
 
 	git clone --recursive https://github.com/zhaojh329/libumqtt.git
+  git submodule update --init --recursive
 	cd libumqtt
 	mkdir build && cd build
+  cmake ..
 	make && sudo make install
 
 # Contributing

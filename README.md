@@ -46,12 +46,12 @@ And provide Lua-binding.
 
 # Build and install
 
-	git clone --recursive https://github.com/zhaojh329/libumqtt.git
-  git submodule update --init --recursive
-	cd libumqtt
-	mkdir build && cd build
-  cmake ..
-	make && sudo make install
+    git clone --recursive https://github.com/zhaojh329/libumqtt.git
+    git submodule update --init --recursive
+    cd libumqtt
+    mkdir build && cd build
+    cmake ..
+    make && sudo make install
 
 # Contributing
 If you would like to help making [libumqtt](https://github.com/zhaojh329/libumqtt) better,

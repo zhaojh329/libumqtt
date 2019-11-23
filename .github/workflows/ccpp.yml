@@ -6,11 +6,18 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v1
+
     - name: create build directory
       run: mkdir build && cd build
+
+    - name: Log Current Working Directory
+      run: pwd
+    - name: List Parent Directory's Contents
+      run: ls -liallh ..
+
     - name: configure
       run: cmake ..
     - name: make

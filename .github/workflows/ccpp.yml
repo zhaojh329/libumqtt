@@ -10,8 +10,11 @@ jobs:
     steps:
     - uses: actions/checkout@v1
 
-    - name: create build directory
-      run: mkdir build && cd build
+    - name: Create Build Directory
+      run: mkdir build
+
+    - name: Change To Build Directory
+      run: cd build
 
     - name: Log Current Working Directory
       run: pwd

@@ -13,15 +13,18 @@ jobs:
     - name: Create Build Directory
       run: mkdir build
 
-    - name: Change To Build Directory
-      working-directory: ./build
-
     - name: Log Current Working Directory
+      working-directory: ./build
       run: pwd
+
     - name: List Parent Directory's Contents
+      working-directory: ./build
       run: ls -liallh ..
 
     - name: configure
+      working-directory: ./build
       run: cmake ..
+      
     - name: make
+      working-directory: ./build
       run: make

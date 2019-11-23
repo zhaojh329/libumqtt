@@ -13,6 +13,9 @@ jobs:
     - name: Download Required Packages
       run: sudo apt install libev-dev libssl-dev liblua5.2-dev
 
+    - name: Initialize Submodules
+      run: git submodule update --init --recursive
+
     - name: Create Build Directory
       run: mkdir build
 

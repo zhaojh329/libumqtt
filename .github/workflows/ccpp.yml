@@ -10,6 +10,9 @@ jobs:
     steps:
     - uses: actions/checkout@v1
 
+    - name: Download Required Packages
+      run: apt install libev-dev libssl-dev liblua5.2-dev
+
     - name: Create Build Directory
       run: mkdir build
 
@@ -24,7 +27,7 @@ jobs:
     - name: configure
       working-directory: ./build
       run: cmake ..
-      
+
     - name: make
       working-directory: ./build
       run: make

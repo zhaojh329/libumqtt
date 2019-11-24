@@ -229,6 +229,8 @@ int main(int argc, char **argv)
     fprintf(stdout, "Fake Username: %s\n", getenv("mqtt_username"));
     fprintf(stdout, "Fake Password: %s\n", getenv("mqtt_password"));
 
+    fprintf(stdout, "Fake Data Block Test: FakeData"); // Yep, Manually Put In To Test Github Blocking In Logs
+
     if (!cfg.options.client_id)
         cfg.options.client_id = "libumqtt-github-tests";
 

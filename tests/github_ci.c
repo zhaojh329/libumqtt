@@ -222,7 +222,6 @@ int main(int argc, char **argv)
     }
 
     // Get Secrets From Github CI
-    cfg.host = getenv("mqtt_hostname");
     cfg.options.username = getenv("mqtt_username");
     cfg.options.password = getenv("mqtt_password");
 

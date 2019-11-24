@@ -65,7 +65,7 @@ jobs:
     - name: Run Tests (OSX)
       working-directory: ./build/tests/
       if: startsWith(runner.os, 'macOS')
-      run: mqtt_hostname="${{ secrets.mqtt_hostname }}" mqtt_username="${{ secrets.mqtt_username }}" mqtt_password="${{ secrets.mqtt_password }}" ./github -d -s -p 8883
+      run: mqtt_hostname="${{ secrets.mqtt_hostname }}" mqtt_username="${{ secrets.mqtt_username }}" mqtt_password="${{ secrets.mqtt_password_semiescaped }}" ./github -d -s -p 8883
       env:
         mqtt_hostname: ${{ secrets.mqtt_hostname }}
         mqtt_username: ${{ secrets.mqtt_username }}

@@ -45,8 +45,8 @@ static struct config cfg = {
         .clean_session = true,
         .username = "test",
         .password = "123456", // This is literally the most used password in the world. Do not use it for real.
-        .will_topic = "cmnd/plug/POWER",
-        .will_message = "TOGGLE" // I'm being cheeky now that the last will and testament works (and I'm going to bed).
+        .will_topic = "will",
+        .will_message = "This is An Example Last Will and Testament"
     }
 };
 
@@ -66,15 +66,15 @@ static void on_conack(struct umqtt_client *cl, bool sp, int code)
 {
     struct umqtt_topic topics[] = {
         {
-            .topic = "test1",
+            .topic = "#",
             .qos = UMQTT_QOS0
         },
         {
-            .topic = "test2",
+            .topic = "tele/plug/SENSOR",
             .qos = UMQTT_QOS1
         },
         {
-            .topic = "test3",
+            .topic = "tele/plug/LWT",
             .qos = UMQTT_QOS2
         }
     };
@@ -91,9 +91,8 @@ static void on_conack(struct umqtt_client *cl, bool sp, int code)
     if (!sp)
         cl->subscribe(cl, topics, ARRAY_SIZE(topics));
 
-    fprintf(stdout, "Sending to test4!!!\n"); // I Think Github Removes STDERR By Default!!!
-    cl->publish(cl, "test4", "hello world", strlen("hello world"), 2, false);
-    exit(1); // Quit After Send!!!
+    fprintf(stdout, "Sending to plug!!!\n"); // I Think Github Removes STDERR By Default!!!
+    cl->publish(cl, "cmnd/plug/POWER", "TOGGLE", strlen("TOGGLE"), 2, false);
 }
 
 static void on_suback(struct umqtt_client *cl, uint8_t *granted_qos, int qos_count)
@@ -115,12 +114,12 @@ static void on_unsuback(struct umqtt_client *cl)
 }
 
 
-static void on_publish(struct umqtt_client *cl, const char *topic, int topic_len,
-    const void *payload, int payloadlen)
+static void on_publish(struct umqtt_client *cl, const char *topic, int topic_len, const void *payload, int payloadlen)
 {
     fprintf(stdout, "Published %s To Topic %s!!!\n", (char *) payload, topic); // I Think Github Removes STDERR By Default!!!
-    umqtt_log_info("on_publish: topic:[%.*s] payload:[%.*s]\n", topic_len, topic,
-        payloadlen, (char *)payload);
+    umqtt_log_info("on_publish: topic:[%.*s] payload:[%.*s]\n", topic_len, topic, payloadlen, (char *)payload);
+
+    exit(1); // Quit After Send!!!
 }
 
 static void on_pingresp(struct umqtt_client *cl)

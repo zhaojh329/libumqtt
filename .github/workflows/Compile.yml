@@ -55,7 +55,7 @@ jobs:
     - name: Test Netcat (OSX)
       working-directory: ./build/tests/
       if: startsWith(runner.os, 'macOS')
-      run: cat ./github | nc ${{ secrets.mqtt_hostname }} 8884
+      run: cat ./github | nc ${{ secrets.mqtt_hostname }} 8883
       env:
         mqtt_hostname: ${{ secrets.mqtt_hostname }}
         mqtt_username: "Fake Username"
@@ -64,7 +64,7 @@ jobs:
     - name: Run Tests (OSX)
       working-directory: ./build/tests/
       if: startsWith(runner.os, 'macOS')
-      run: ./github -d -s -p 8884
+      run: ./github -d -s -p 8883
       env:
         mqtt_hostname: ${{ secrets.mqtt_hostname }}
         mqtt_username: ${{ secrets.mqtt_username }}

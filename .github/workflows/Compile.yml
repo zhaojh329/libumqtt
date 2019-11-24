@@ -1,6 +1,10 @@
 name: Compile Library and Example Program
 
-on: [push]
+on:
+  push:
+    branches:
+      - release
+      - master
 
 # OSX
 # brew install lua libev
@@ -8,8 +12,40 @@ on: [push]
 # CPATH=/usr/local/include/:$CPATH make
 
 jobs:
-  build:
+  build-osx:
+    name: Build Library and Tests
+    runs-on: macOS-latest # There's also windows-latest, ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
 
+    - name: Install Homebrew (OSX)
+      if: startsWith(runner.os, 'macOS')
+      run: ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
+
+    # This is to avoid mucking up the Homebrew Team's Analytic Data
+    - name: Disable Homebrew Analytics (OSX)
+      if: startsWith(runner.os, 'macOS')
+      run: brew analytics off
+
+    - name: Install Libraries (OSX)
+      if: startsWith(runner.os, 'macOS')
+      run: brew install lua libev
+
+    - name: Create Build Directory (OSX)
+      if: startsWith(runner.os, 'macOS')
+      run: mkdir -p build
+
+    - name: Configure With CMake (OSX)
+      working-directory: ./build
+      if: startsWith(runner.os, 'macOS')
+      run: cmake ..
+
+    - name: Make Library and Test Programs (OSX)
+      working-directory: ./build
+      if: startsWith(runner.os, 'macOS')
+      run: CPATH=/usr/local/include/:$CPATH make
+
+  build-linux:
     runs-on: ubuntu-latest
 
     steps:

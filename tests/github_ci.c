@@ -93,6 +93,7 @@ static void on_conack(struct umqtt_client *cl, bool sp, int code)
 
     fprintf(stdout, "Sending to test4!!!\n"); // I Think Github Removes STDERR By Default!!!
     cl->publish(cl, "test4", "hello world", strlen("hello world"), 2, false);
+    exit(1); // Quit After Send!!!
 }
 
 static void on_suback(struct umqtt_client *cl, uint8_t *granted_qos, int qos_count)

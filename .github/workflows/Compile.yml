@@ -43,8 +43,6 @@ jobs:
       if: startsWith(runner.os, 'macOS')
       run: cmake ..
       env:
-        LDFLAGS: -L/usr/local/opt/openssl/lib
-        CPPFLAGS: -I/usr/local/opt/openssl/include
         OPENSSL_ROOT_DIR: /usr/local/opt/openssl
         OPENSSL_INCLUDE_DIR: /usr/local/opt/openssl/include
 

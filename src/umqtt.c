@@ -215,7 +215,7 @@ static void handle_suback(struct umqtt_client *cl)
 
     free_mid(cl, mid);
 
-    if (cl->on_suback)        
+    if (cl->on_suback)
         cl->on_suback(cl, buffer_data(rb) + 2, pkt->remlen - 2);
 }
 
@@ -247,10 +247,10 @@ static void handle_publish(struct umqtt_client *cl)
     uint8_t *payload;
     const char *topic;
     int topic_len;
-    
+
     topic_len = ntohs(buffer_get_u16(rb, 0));
     topic = (char *)buffer_data(rb) + 2;
-    
+
     payload = (uint8_t *)topic + topic_len;
     payloadlen = pkt->remlen - 2 - topic_len;
 
@@ -463,6 +463,7 @@ static int __umqtt_publish(struct umqtt_client *cl, uint16_t mid,
         return -1;
     }
 
+    // TODO: Why doesn't retain or QOS work on Publish?
     buffer_put_u8(wb, (UMQTT_PUBLISH << 4) | (dup & 0x1 << 3) | (qos << 1) | retain);
     umqtt_encode_remlen(remlen - remlen_bytes - UMQTT_PKT_HDR_LEN, wb);
 
@@ -679,7 +680,7 @@ static int (*parse_cbs[])(struct umqtt_client *cl) = {
 };
 
 static void umqtt_parse(struct umqtt_client *cl)
-{   
+{
     int err = 0;
 
     do {

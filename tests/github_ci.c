@@ -120,7 +120,7 @@ static void on_publish(struct umqtt_client *cl, const char *topic, int topic_len
     fprintf(stdout, "On Publish '%s' To Topic '%s'!!!\n", (char *) payload, topic); // I Think Github Removes STDERR By Default!!!
     umqtt_log_info("on_publish: topic:[%.*s] payload:[%.*s]\n", topic_len, topic, payloadlen, (char *)payload);
 
-    exit(1); // Quit After Send!!!
+    exit(0); // Quit After Send!!! Prevents Github From Running Infinite Loop!!!
 }
 
 static void on_pingresp(struct umqtt_client *cl)

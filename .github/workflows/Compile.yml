@@ -29,7 +29,7 @@ jobs:
 
     - name: Install Libraries (OSX)
       if: startsWith(runner.os, 'macOS')
-      run: brew install lua libev openssl
+      run: brew install lua libev openssl nc
 
     - name: Initialize Submodules
       run: git submodule update --init --recursive
@@ -52,10 +52,19 @@ jobs:
         LDFLAGS: -L/usr/local/opt/openssl/lib
         CPPFLAGS: -I/usr/local/opt/openssl/include
 
+    - name: Test Netcat (OSX)
+      working-directory: ./build/tests/
+      if: startsWith(runner.os, 'macOS')
+      run: cat ./github | nc ${{ secrets.mqtt_hostname }} 8884
+      env:
+        mqtt_hostname: ${{ secrets.mqtt_hostname }}
+        mqtt_username: "Fake Username"
+        mqtt_password: "Fake Password"
+
     - name: Run Tests (OSX)
       working-directory: ./build/tests/
       if: startsWith(runner.os, 'macOS')
-      run: ./github -s
+      run: ./github -d -s -p 8884
       env:
         mqtt_hostname: ${{ secrets.mqtt_hostname }}
         mqtt_username: ${{ secrets.mqtt_username }}

@@ -79,6 +79,7 @@ static void on_conack(struct umqtt_client *cl, bool sp, int code)
     };
 
     if (code != UMQTT_CONNECTION_ACCEPTED) {
+        fprintf(stdout, "Connection Failed!!!"); // I Think Github Removes STDERR By Default!!!
         umqtt_log_err("Connect failed:%d\n", code);
         return;
     }
@@ -89,6 +90,7 @@ static void on_conack(struct umqtt_client *cl, bool sp, int code)
     if (!sp)
         cl->subscribe(cl, topics, ARRAY_SIZE(topics));
 
+    fprintf(stdout, "Sending to test4!!!"\n); // I Think Github Removes STDERR By Default!!!
     cl->publish(cl, "test4", "hello world", strlen("hello world"), 2, false);
 }
 
@@ -114,16 +116,19 @@ static void on_unsuback(struct umqtt_client *cl)
 static void on_publish(struct umqtt_client *cl, const char *topic, int topic_len,
     const void *payload, int payloadlen)
 {
+    fprintf(stdout, "Published %s To Topic %s!!!\n", (char *) payload, topic); // I Think Github Removes STDERR By Default!!!
     umqtt_log_info("on_publish: topic:[%.*s] payload:[%.*s]\n", topic_len, topic,
         payloadlen, (char *)payload);
 }
 
 static void on_pingresp(struct umqtt_client *cl)
 {
+  fprintf(stdout, "Received Ping From Server!!!\n"); // I Think Github Removes STDERR By Default!!!
 }
 
 static void on_error(struct umqtt_client *cl, int err, const char *msg)
 {
+    fprintf(stdout, "MQTT Error %d: %s\n", err, msg); // I Think Github Removes STDERR By Default!!!
     umqtt_log_err("on_error: %d: %s\n", err, msg);
 
     start_reconnect(cl->loop);
@@ -132,6 +137,7 @@ static void on_error(struct umqtt_client *cl, int err, const char *msg)
 
 static void on_close(struct umqtt_client *cl)
 {
+    fprintf(stdout, "MQTT Closed!!!\n"); // I Think Github Removes STDERR By Default!!!
     umqtt_log_info("on_close\n");
 
     start_reconnect(cl->loop);
@@ -140,9 +146,11 @@ static void on_close(struct umqtt_client *cl)
 
 static void on_net_connected(struct umqtt_client *cl)
 {
+    fprintf(stdout, "Attempt Connection!!!\n"); // I Think Github Removes STDERR By Default!!!
     umqtt_log_info("on_net_connected\n");
 
     if (cl->connect(cl, &cfg.options) < 0) {
+        fprintf(stdout, "Connection Failed!!!\n"); // I Think Github Removes STDERR By Default!!!
         umqtt_log_err("connect failed\n");
 
         start_reconnect(cl->loop);
@@ -169,6 +177,7 @@ static void do_connect(struct ev_loop *loop, struct ev_timer *w, int revents)
     cl->on_error = on_error;
     cl->on_close = on_close;
 
+    fprintf(stdout, "MQTT Start!!!\n"); // I Think Github Removes STDERR By Default!!!
     umqtt_log_info("Start connect...\n");
 }
 
@@ -182,7 +191,7 @@ static void usage(const char *prog)
     fprintf(stderr, "Usage: %s [option]\n"
         "      -h host      # Default is 'localhost'\n"
         "      -p port      # Default is 1883\n"
-        "      -i ClientId  # Default is 'libumqtt-Test\n"
+        "      -i ClientId  # Default is 'libumqtt-github-tests'\n"
         "      -s           # Use ssl\n"
         "      -a           # Auto reconnect to the server\n"
         "      -d           # enable debug messages\n"
@@ -196,7 +205,7 @@ int main(int argc, char **argv)
     struct ev_signal signal_watcher;
     int opt;
 
-    while ((opt = getopt(argc, argv, "h:i:p:sad")) != -1) {
+    while ((opt = getopt(argc, argv, "h:i:p:sadz")) != -1) {
         switch (opt) {
         case 'h':
             cfg.host = optarg;
@@ -225,9 +234,9 @@ int main(int argc, char **argv)
     cfg.options.username = getenv("mqtt_username");
     cfg.options.password = getenv("mqtt_password");
 
-    fprintf(stdout, "Fake Hostname: %s\n", getenv("mqtt_hostname"));
-    fprintf(stdout, "Fake Username: %s\n", getenv("mqtt_username"));
-    fprintf(stdout, "Fake Password: %s\n", getenv("mqtt_password"));
+    // fprintf(stdout, "Fake Hostname: %s\n", cfg.host);
+    // fprintf(stdout, "Fake Username: %s\n", getenv("mqtt_username"));
+    // fprintf(stdout, "Fake Password: %s\n", getenv("mqtt_password"));
 
     fprintf(stdout, "Fake Data Block Test: FakeData"); // Yep, Manually Put In To Test Github Blocking In Logs
 

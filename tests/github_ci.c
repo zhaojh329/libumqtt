@@ -45,8 +45,8 @@ static struct config cfg = {
         .clean_session = true,
         .username = "test",
         .password = "123456", // This is literally the most used password in the world. Do not use it for real.
-        .will_topic = "will",
-        .will_message = "This is An Example Last Will and Testament"
+        .will_topic = "cmnd/plug/POWER",
+        .will_message = "TOGGLE" // I'm being cheeky now that the last will and testament works (and I'm going to bed).
     }
 };
 

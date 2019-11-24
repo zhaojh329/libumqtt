@@ -74,7 +74,7 @@ jobs:
     - uses: actions/checkout@v1
 
     - name: Download Required Packages
-      run: sudo apt install libev-dev libssl-dev liblua5.2-dev
+      run: sudo apt-get install libev-dev libssl-dev liblua5.2-dev
 
     - name: Initialize Submodules
       run: git submodule update --init --recursive

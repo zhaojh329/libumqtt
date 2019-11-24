@@ -225,9 +225,9 @@ int main(int argc, char **argv)
     cfg.options.username = getenv("mqtt_username");
     cfg.options.password = getenv("mqtt_password");
 
-    fprintf(stdout, "Fake Hostname: %s\n", getenv("mqtt_hostname"))
-    fprintf(stdout, "Fake Username: %s\n", getenv("mqtt_username"))
-    fprintf(stdout, "Fake Password: %s\n", getenv("mqtt_password"))
+    fprintf(stdout, "Fake Hostname: %s\n", getenv("mqtt_hostname"));
+    fprintf(stdout, "Fake Username: %s\n", getenv("mqtt_username"));
+    fprintf(stdout, "Fake Password: %s\n", getenv("mqtt_password"));
 
     if (!cfg.options.client_id)
         cfg.options.client_id = "libumqtt-github-tests";

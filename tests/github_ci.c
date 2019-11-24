@@ -39,7 +39,7 @@ static struct ev_timer reconnect_timer;
 // NOTE: For encryption, specify -s on the commandline (e.g. ./example/example -s)
 static struct config cfg = {
     .host = "localhost",
-    .port = 8883,
+    .port = 1883,
     .options = {
         .keep_alive = 30,
         .clean_session = true,
@@ -160,6 +160,7 @@ static void on_net_connected(struct umqtt_client *cl)
 
 static void do_connect(struct ev_loop *loop, struct ev_timer *w, int revents)
 {
+    fprintf(stdout, "Attempt MQTT Start!!!\n"); // I Think Github Removes STDERR By Default!!!
     struct umqtt_client *cl;
 
     cl = umqtt_new(loop, cfg.host, cfg.port, cfg.ssl);
@@ -251,7 +252,10 @@ int main(int argc, char **argv)
 
     umqtt_log_info("libumqttc version %s\n", UMQTT_VERSION_STRING);
 
+    fprintf(stdout, "Start Loop!!!\n"); // I Think Github Removes STDERR By Default!!!
     ev_run(loop, 0);
+    fprintf(stdout, "End Loop!!!\n"); // I Think Github Removes STDERR By Default!!!
 
+    exit(-420);
     return 0;
 }

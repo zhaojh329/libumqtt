@@ -90,7 +90,7 @@ static void on_conack(struct umqtt_client *cl, bool sp, int code)
     if (!sp)
         cl->subscribe(cl, topics, ARRAY_SIZE(topics));
 
-    fprintf(stdout, "Sending to test4!!!"\n); // I Think Github Removes STDERR By Default!!!
+    fprintf(stdout, "Sending to test4!!!\n"); // I Think Github Removes STDERR By Default!!!
     cl->publish(cl, "test4", "hello world", strlen("hello world"), 2, false);
 }
 

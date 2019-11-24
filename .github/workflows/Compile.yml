@@ -46,7 +46,11 @@ jobs:
     - name: Make Library and Test Programs (OSX)
       working-directory: ./build
       if: startsWith(runner.os, 'macOS')
-      run: CPATH=/usr/local/include/:$CPATH make
+      run: make
+      env:
+        CPATH: /usr/local/include/
+        LDFLAGS: -L/usr/local/opt/openssl/lib
+        CPPFLAGS: -I/usr/local/opt/openssl/include
 
     - name: Run Tests (OSX)
       working-directory: ./build/tests/

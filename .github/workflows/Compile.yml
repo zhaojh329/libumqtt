@@ -29,7 +29,10 @@ jobs:
 
     - name: Install Libraries (OSX)
       if: startsWith(runner.os, 'macOS')
-      run: brew install lua libev
+      run: brew install lua libev openssl
+
+    - name: Initialize Submodules
+      run: git submodule update --init --recursive
 
     - name: Create Build Directory (OSX)
       if: startsWith(runner.os, 'macOS')

@@ -93,7 +93,7 @@ static void on_conack(struct umqtt_client *cl, bool sp, int code)
 
     fprintf(stdout, "Sending to plug!!!\n"); // I Think Github Removes STDERR By Default!!!
     cl->publish(cl, "cmnd/plug/POWER", "TOGGLE", strlen("TOGGLE"), 0, true); // Last two are QOS and Retain
-    cl->publish(cl, "cmnd/plug/POWER", "", strlen(""), 0, true); // Last two are QOS and Retain
+    //cl->publish(cl, "cmnd/plug/POWER", "", strlen(""), 0, true); // Last two are QOS and Retain
 }
 
 static void on_suback(struct umqtt_client *cl, uint8_t *granted_qos, int qos_count)

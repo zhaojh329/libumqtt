@@ -46,7 +46,7 @@ static struct config cfg = {
         .username = "redacted",
         .password = "redacted",
         .will_topic = "will",
-        .will_message = "will test"
+        .will_message = "This is An Example Last Will and Testament"
     }
 };
 

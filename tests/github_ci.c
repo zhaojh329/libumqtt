@@ -53,6 +53,7 @@ static struct config cfg = {
 static void start_reconnect(struct ev_loop *loop)
 {
     if (!cfg.auto_reconnect) {
+        fprintf(stdout, "Not Attempting Reconnect!!!\n"); // I Think Github Removes STDERR By Default!!!
         ev_break(loop, EVBREAK_ALL);
         return;
     }
@@ -165,10 +166,12 @@ static void do_connect(struct ev_loop *loop, struct ev_timer *w, int revents)
 
     cl = umqtt_new(loop, cfg.host, cfg.port, cfg.ssl);
     if (!cl) {
+        fprintf(stdout, "Failed To Create Client!!!\n"); // I Think Github Removes STDERR By Default!!!
         start_reconnect(loop);
         return;
     }
 
+    fprintf(stdout, "Setup Client Callbacks!!!\n"); // I Think Github Removes STDERR By Default!!!
     cl->on_net_connected = on_net_connected;
     cl->on_conack = on_conack;
     cl->on_suback = on_suback;
@@ -239,7 +242,7 @@ int main(int argc, char **argv)
     // fprintf(stdout, "Fake Username: %s\n", getenv("mqtt_username"));
     // fprintf(stdout, "Fake Password: %s\n", getenv("mqtt_password"));
 
-    fprintf(stdout, "Fake Data Block Test: FakeData"); // Yep, Manually Put In To Test Github Blocking In Logs
+    fprintf(stdout, "Fake Data Block Test: FakeData\n"); // Yep, Manually Put In To Test Github Blocking In Logs
 
     if (!cfg.options.client_id)
         cfg.options.client_id = "libumqtt-github-tests";
@@ -256,6 +259,6 @@ int main(int argc, char **argv)
     ev_run(loop, 0);
     fprintf(stdout, "End Loop!!!\n"); // I Think Github Removes STDERR By Default!!!
 
-    exit(-420);
+    exit(-1);
     return 0;
 }

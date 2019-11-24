@@ -196,7 +196,7 @@ static void usage(const char *prog)
         "      -a           # Auto reconnect to the server\n"
         "      -d           # enable debug messages\n"
         , prog);
-    exit(1);
+    exit(0);
 }
 
 int main(int argc, char **argv)

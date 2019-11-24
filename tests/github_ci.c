@@ -92,7 +92,8 @@ static void on_conack(struct umqtt_client *cl, bool sp, int code)
         cl->subscribe(cl, topics, ARRAY_SIZE(topics));
 
     fprintf(stdout, "Sending to plug!!!\n"); // I Think Github Removes STDERR By Default!!!
-    cl->publish(cl, "cmnd/plug/POWER", "TOGGLE", strlen("TOGGLE"), 2, false);
+    cl->publish(cl, "cmnd/plug/POWER", "TOGGLE", strlen("TOGGLE"), 0, true); // Last two are QOS and Retain
+    cl->publish(cl, "cmnd/plug/POWER", "", strlen(""), 0, true); // Last two are QOS and Retain
 }
 
 static void on_suback(struct umqtt_client *cl, uint8_t *granted_qos, int qos_count)
@@ -116,7 +117,7 @@ static void on_unsuback(struct umqtt_client *cl)
 
 static void on_publish(struct umqtt_client *cl, const char *topic, int topic_len, const void *payload, int payloadlen)
 {
-    fprintf(stdout, "Published %s To Topic %s!!!\n", (char *) payload, topic); // I Think Github Removes STDERR By Default!!!
+    fprintf(stdout, "On Publish '%s' To Topic '%s'!!!\n", (char *) payload, topic); // I Think Github Removes STDERR By Default!!!
     umqtt_log_info("on_publish: topic:[%.*s] payload:[%.*s]\n", topic_len, topic, payloadlen, (char *)payload);
 
     exit(1); // Quit After Send!!!

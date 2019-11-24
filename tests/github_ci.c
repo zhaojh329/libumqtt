@@ -39,7 +39,7 @@ static struct ev_timer reconnect_timer;
 // NOTE: For encryption, specify -s on the commandline (e.g. ./example/example -s)
 static struct config cfg = {
     .host = "localhost",
-    .port = 8883,
+    .port = 8884,
     .options = {
         .keep_alive = 30,
         .clean_session = true,

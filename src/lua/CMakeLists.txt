@@ -1,15 +1,16 @@
 find_package(Lua)
 
 set(UMQTT_LUA_SUPPORT_DEFAULT "ON")
+set(BUILD_LUA_DEFAULT "ON")
 
 if (NOT LUA_FOUND)
 	set(BUILD_LUA_DEFAULT "OFF")
 endif (NOT LUA_FOUND)
 
-option(UMQTT_LUA_SUPPORT "Enable build of Lua module" ${UMQTT_LUA_SUPPORT_DEFAULT})
+option(UMQTT_LUA_SUPPORT "Enable build of Lua module" ${UMQTT_LUA_SUPPORT})
 
 if(UMQTT_LUA_SUPPORT)
-	include_directories(${LUA_INCLUDE_DIR})
+	include_directories(${LUA_INCLUDE_DIRS})
 
 	add_library(umqtt-lua MODULE umqtt_lua.c)
 	set_target_properties(umqtt-lua PROPERTIES OUTPUT_NAME umqtt PREFIX "")

@@ -37,13 +37,13 @@ struct config {
 static struct ev_timer reconnect_timer;
 
 static struct config cfg = {
-    .host = "localhost",
-    .port = 1883,
+    .host = "10.0.0.64",
+    .port = 8883,
     .options = {
         .keep_alive = 30,
         .clean_session = true,
-        .username = "test",
-        .password = "123456",
+        .username = "redacted",
+        .password = "redacted",
         .will_topic = "will",
         .will_message = "will test"
     }
@@ -232,7 +232,6 @@ int main(int argc, char **argv)
     umqtt_log_info("libumqttc version %s\n", UMQTT_VERSION_STRING);
 
     ev_run(loop, 0);
-    
+
     return 0;
 }
-

@@ -1,6 +1,11 @@
-name: C/C++ CI
+name: Compile Library and Example Program
 
 on: [push]
+
+# OSX
+# brew install lua libev
+# cmake ..
+# CPATH=/usr/local/include/:$CPATH make
 
 jobs:
   build:

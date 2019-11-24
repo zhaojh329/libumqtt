@@ -42,6 +42,8 @@ jobs:
       working-directory: ./build
       if: startsWith(runner.os, 'macOS')
       run: cmake ..
+      LDFLAGS: -L/usr/local/opt/openssl/lib
+      CPPFLAGS: -I/usr/local/opt/openssl/include
 
     - name: Make Library and Test Programs (OSX)
       working-directory: ./build
@@ -49,8 +51,6 @@ jobs:
       run: make
       env:
         CPATH: /usr/local/include/
-        LDFLAGS: -L/usr/local/opt/openssl/lib
-        CPPFLAGS: -I/usr/local/opt/openssl/include
 
     # Github Does Not Block Port 8883 On Outgoing TCP Connections At All
     # - name: Test Netcat (OSX)

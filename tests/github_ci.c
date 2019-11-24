@@ -164,7 +164,7 @@ static void do_connect(struct ev_loop *loop, struct ev_timer *w, int revents)
     fprintf(stdout, "Attempt MQTT Start!!!\n"); // I Think Github Removes STDERR By Default!!!
     struct umqtt_client *cl;
 
-    cl = umqtt_new(loop, cfg.host, cfg.port, cfg.ssl);
+    cl = umqtt_new(loop, cfg.host, cfg.port, cfg.ssl); // This is the problem line of code in Github's CI Test
     if (!cl) {
         fprintf(stdout, "Failed To Create Client!!!\n"); // I Think Github Removes STDERR By Default!!!
         start_reconnect(loop);

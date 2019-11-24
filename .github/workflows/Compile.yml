@@ -13,7 +13,7 @@ on:
 
 jobs:
   build-osx:
-    name: Build Library and Tests
+    name: Build Library and Tests (OSX)
     runs-on: macOS-latest # There's also windows-latest, ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -48,8 +48,18 @@ jobs:
       if: startsWith(runner.os, 'macOS')
       run: CPATH=/usr/local/include/:$CPATH make
 
+    - name: Run Tests (OSX)
+      working-directory: ./build/tests/
+      if: startsWith(runner.os, 'macOS')
+      run: ./github -s
+      env:
+        mqtt_hostname: ${{ secrets.mqtt_hostname }}
+        mqtt_username: ${{ secrets.mqtt_username }}
+        mqtt_password: ${{ secrets.mqtt_password }}
+
   build-linux:
     runs-on: ubuntu-latest
+    name: Build Library and Tests (Linux)
 
     steps:
     - uses: actions/checkout@v1

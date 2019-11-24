@@ -38,13 +38,13 @@ static struct ev_timer reconnect_timer;
 
 // NOTE: For encryption, specify -s on the commandline (e.g. ./example/example -s)
 static struct config cfg = {
-    .host = "10.0.0.64",
+    .host = "localhost",
     .port = 8883,
     .options = {
         .keep_alive = 30,
         .clean_session = true,
-        .username = "redacted",
-        .password = "redacted",
+        .username = "test",
+        .password = "123456", // This is literally the most used password in the world. Do not use it for real.
         .will_topic = "will",
         .will_message = "This is An Example Last Will and Testament"
     }
@@ -221,8 +221,13 @@ int main(int argc, char **argv)
         }
     }
 
+    // Get Secrets From Github CI
+    cfg.host = getenv("mqtt_hostname");
+    cfg.options.username = getenv("mqtt_username");
+    cfg.options.password = getenv("mqtt_password");
+
     if (!cfg.options.client_id)
-        cfg.options.client_id = "libumqtt-Test";
+        cfg.options.client_id = "libumqtt-github-tests";
 
     ev_signal_init(&signal_watcher, signal_cb, SIGINT);
     ev_signal_start(loop, &signal_watcher);

@@ -732,10 +732,10 @@ static void umqtt_io_read_cb(struct ev_loop *loop, struct ev_io *w, int revents)
 
 #if UMQTT_SSL_SUPPORT
     if (cl->ssl)
-        ret = buffer_put_fd(rb, w->fd, -1, &eof, umqtt_ssl_read, cl->ssl);
+        ret = buffer_put_fd_ex(rb, w->fd, -1, &eof, umqtt_ssl_read, cl->ssl);
     else
 #endif
-        ret = buffer_put_fd(rb, w->fd, -1, &eof, NULL, NULL);
+        ret = buffer_put_fd(rb, w->fd, -1, &eof);
 
     if (ret < 0) {
         umqtt_error(cl, UMQTT_ERROR_IO, strerror(errno));
@@ -781,10 +781,10 @@ static void umqtt_io_write_cb(struct ev_loop *loop, struct ev_io *w, int revents
 
 #if UMQTT_SSL_SUPPORT
     if (cl->ssl)
-        ret = buffer_pull_to_fd(&cl->wb, w->fd, buffer_length(&cl->wb), umqtt_ssl_write, cl->ssl);
+        ret = buffer_pull_to_fd_ex(&cl->wb, w->fd, buffer_length(&cl->wb), umqtt_ssl_write, cl->ssl);
     else
 #endif
-        ret = buffer_pull_to_fd(&cl->wb, w->fd, buffer_length(&cl->wb), NULL, NULL);
+        ret = buffer_pull_to_fd(&cl->wb, w->fd, buffer_length(&cl->wb));
 
     if (ret < 0) {
         umqtt_error(cl, UMQTT_ERROR_IO, "write error");

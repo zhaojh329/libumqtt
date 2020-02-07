@@ -3,7 +3,7 @@ add_definitions(-O -Wall -Werror --std=gnu99 -D_GNU_SOURCE)
 # The version number.
 set(UMQTT_VERSION_MAJOR 1)
 set(UMQTT_VERSION_MINOR 0)
-set(UMQTT_VERSION_PATCH 2)
+set(UMQTT_VERSION_PATCH 3)
 
 # Check the third party Libraries
 find_package(Libev REQUIRED)

@@ -609,6 +609,7 @@ static int parse_fixed_header(struct umqtt_client *cl)
     pkt->type = data[0] >> 4;
     pkt->flags = data[0] & 0xF;
 
+    pkt->remlen_mul = 1;
     pkt->remlen = data[1] & 0x7F;
     more_remlen = data[1] & 0x80;
 
@@ -649,10 +650,10 @@ static int parse_remaining_length(struct umqtt_client *cl)
     size_t data_len = buffer_length(rb);
     uint32_t parsed = 0;
 
-    uint32_t mul = 1;
-    while (parsed < UMQTT_MAX_REMLEN_BYTES && parsed < data_len) {
-        mul = mul << 7;
-        pkt->remlen += mul * (data[parsed] & 0x7F);
+    while (parsed < data_len) {
+        pkt->remlen_mul = pkt->remlen_mul << 7;
+        pkt->remlen += pkt->remlen_mul * (data[parsed] & 0x7F);
+
         if ((data[parsed++] & 0x80) == 0) {
             cl->state = UMQTT_STATE_HANDLE_PACKET;
             break;

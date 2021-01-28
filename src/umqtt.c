@@ -345,7 +345,7 @@ static int umqtt_connect(struct umqtt_client *cl, struct umqtt_connect_opts *opt
         will = true;
 
         remlen += strlen(opts->will_topic) + 2;
-        remlen += strlen(opts->will_message) + 2;
+        remlen += (opts->will_message_len ? : strlen(opts->will_message)) + 2;
 
         flags |= 1 << 2;
         flags |= (opts->will_qos & 0x3) << 3;
@@ -378,8 +378,10 @@ static int umqtt_connect(struct umqtt_client *cl, struct umqtt_connect_opts *opt
     umqtt_put_string(wb, client_id);
 
     if (will) {
+        size_t will_message_len = opts->will_message_len ? : strlen(opts->will_message);
         umqtt_put_string(wb, opts->will_topic);
-        umqtt_put_string(wb, opts->will_message);
+        buffer_put_u16(wb, htons(will_message_len));
+        buffer_put_data(wb, opts->will_message, will_message_len);
     }
 
     if (opts->username) {

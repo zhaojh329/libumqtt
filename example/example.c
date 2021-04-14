@@ -183,6 +183,8 @@ static void usage(const char *prog)
         "      -p port      # Default is 1883\n"
         "      -i ClientId  # Default is 'libumqtt-Test\n"
         "      -s           # Use ssl\n"
+        "      -u           # Username\n"
+        "      -P           # Password\n"
         "      -a           # Auto reconnect to the server\n"
         "      -d           # enable debug messages\n"
         , prog);
@@ -195,7 +197,7 @@ int main(int argc, char **argv)
     struct ev_signal signal_watcher;
     int opt;
 
-    while ((opt = getopt(argc, argv, "h:i:p:sad")) != -1) {
+    while ((opt = getopt(argc, argv, "h:i:p:sau:P:d")) != -1) {
         switch (opt) {
         case 'h':
             cfg.host = optarg;
@@ -211,6 +213,12 @@ int main(int argc, char **argv)
             break;
         case 'i':
             cfg.options.client_id = optarg;
+            break;
+        case 'u':
+            cfg.options.username = optarg;
+            break;
+        case 'P':
+            cfg.options.password = optarg;
             break;
         case 'd':
             umqtt_log_threshold(LOG_DEBUG);

@@ -1,7 +1,7 @@
 # The version number.
 set(UMQTT_VERSION_MAJOR 1)
-set(UMQTT_VERSION_MINOR 0)
-set(UMQTT_VERSION_PATCH 3)
+set(UMQTT_VERSION_MINOR 1)
+set(UMQTT_VERSION_PATCH 0)
 
 aux_source_directory(. SOURCES)
 list(APPEND SOURCES buffer/buffer.c)

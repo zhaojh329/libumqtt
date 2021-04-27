@@ -8,14 +8,13 @@
 [6]: https://github.com/zhaojh329/libumqtt/issues/new
 [7]: https://img.shields.io/badge/release-1.1.0-blue.svg?style=plastic
 [8]: https://github.com/zhaojh329/libumqtt/releases
-[9]: https://travis-ci.org/zhaojh329/libumqtt.svg?branch=master
-[10]: https://travis-ci.org/zhaojh329/libumqtt
+[9]: https://github.com/zhaojh329/libumqtt/workflows/build/badge.svg
 
 [![license][1]][2]
 [![PRs Welcome][3]][4]
 [![Issue Welcome][5]][6]
 [![Release Version][7]][8]
-[![Build Status][9]][10]
+![Build Status][9]
 
 [libev]: http://software.schmorp.de/pkg/libev.html
 [openssl]: https://github.com/openssl/openssl

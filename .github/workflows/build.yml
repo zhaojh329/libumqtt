@@ -1,0 +1,32 @@
+name: build
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        include:
+          - ssl: none
+            name: none
+          - ssl: openssl
+            name: OPENSSL
+            pkg: libssl-dev
+          - ssl: mbedtls
+            name: MBEDTLS
+            pkg: libmbedtls-dev
+          - ssl: wolfssl
+            name: WOLFSSL
+            pkg: libwolfssl-dev
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: build
+        env:
+          name: ${{ matrix.name }}
+          pkg: ${{ matrix.pkg }}
+        run: |
+          sudo apt install -y libev-dev liblua5.1-0-dev
+          [ -n "$pkg" ] && sudo apt install -y $pkg
+          [ "$name" = "none" ] && cmake . -DSSL_SUPPORT=OFF || cmake . -DUSE_$name=ON
+          make

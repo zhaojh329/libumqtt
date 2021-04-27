@@ -37,6 +37,7 @@ void umqtt_log_close();
 
 #define umqtt_log_debug(fmt...)     umqtt_log(LOG_DEBUG, fmt)
 #define umqtt_log_info(fmt...)      umqtt_log(LOG_INFO, fmt)
+#define umqtt_log_warn(fmt...)      umqtt_log(LOG_WARNING, fmt)
 #define umqtt_log_err(fmt...)       umqtt_log(LOG_ERR, fmt)
 
 void  __umqtt_log(const char *filename, int line, int priority, const char *fmt, ...);

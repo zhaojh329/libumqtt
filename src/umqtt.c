@@ -32,9 +32,16 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 
-#include "ssl.h"
 #include "utils.h"
 #include "umqtt.h"
+
+#ifdef SSL_SUPPORT
+#include "ssl/ssl.h"
+#endif
+
+#ifdef SSL_SUPPORT
+static struct ssl_context *ssl_ctx;
+#endif
 
 static const char *umqtt_packet_type_to_string(int type)
 {
@@ -708,18 +715,68 @@ static int check_socket_state(struct umqtt_client *cl)
         return -1;
     }
 
-#if UMQTT_SSL_SUPPORT
+#ifdef SSL_SUPPORT
     if (cl->ssl)
         cl->state = UMQTT_STATE_SSL_HANDSHAKE;
     else
 #endif
         cl->state = UMQTT_STATE_PARSE_FH;
 
-
     if (cl->state == UMQTT_STATE_PARSE_FH && cl->on_net_connected)
         cl->on_net_connected(cl);
     return 0;
 }
+
+#ifdef SSL_SUPPORT
+static void on_ssl_verify_error(int error, const char *str, void *arg)
+{
+    umqtt_log_warn("SSL certificate error(%d): %s\n", error, str);
+}
+
+/* -1 error, 0 pending, 1 ok */
+static int ssl_negotiated(struct umqtt_client *cl)
+{
+    char err_buf[128];
+    int ret;
+
+    ret = ssl_connect(cl->ssl, false, on_ssl_verify_error, NULL);
+    if (ret == SSL_PENDING)
+        return 0;
+
+    if (ret == SSL_ERROR) {
+        umqtt_log_err("ssl connect error(%d): %s\n", ssl_err_code, ssl_strerror(ssl_err_code, err_buf, sizeof(err_buf)));
+        umqtt_error(cl, UMQTT_ERROR_SSL_HANDSHAKE, err_buf);
+        return -1;
+    }
+
+    cl->state = UMQTT_STATE_PARSE_FH;
+
+    if (cl->on_net_connected)
+        cl->on_net_connected(cl);
+
+    return 1;
+}
+
+static int umqtt_ssl_read(int fd, void *buf, size_t count, void *arg)
+{
+    struct umqtt_client *cl = arg;
+    static char err_buf[128];
+    int ret;
+
+    ret = ssl_read(cl->ssl, buf, count);
+    if (ret == SSL_ERROR) {
+        umqtt_log_err("ssl_read(%d): %s\n", ssl_err_code,
+                ssl_strerror(ssl_err_code, err_buf, sizeof(err_buf)));
+        umqtt_error(cl, UMQTT_ERROR_IO, err_buf);
+        return P_FD_ERR;
+    }
+
+    if (ret == SSL_PENDING)
+        return P_FD_PENDING;
+
+    return ret;
+}
+#endif
 
 static void umqtt_io_read_cb(struct ev_loop *loop, struct ev_io *w, int revents)
 {
@@ -733,17 +790,25 @@ static void umqtt_io_read_cb(struct ev_loop *loop, struct ev_io *w, int revents)
             return;
     }
 
-#if UMQTT_SSL_SUPPORT
-    if (cl->ssl)
-        ret = buffer_put_fd_ex(rb, w->fd, -1, &eof, umqtt_ssl_read, cl->ssl);
-    else
-#endif
-        ret = buffer_put_fd(rb, w->fd, -1, &eof);
+    if (cl->ssl) {
+#ifdef SSL_SUPPORT
+        if (unlikely(cl->state == UMQTT_STATE_SSL_HANDSHAKE)) {
+            ret = ssl_negotiated(cl);
+            if (ret <= 0)
+                return;
+        }
 
-    if (ret < 0) {
-        umqtt_error(cl, UMQTT_ERROR_IO, strerror(errno));
-        return;
-    }
+        ret = buffer_put_fd_ex(&cl->rb, w->fd, 4096, &eof, umqtt_ssl_read, cl);
+        if (ret < 0)
+            return;
+#endif
+    } else {
+        ret = buffer_put_fd(rb, w->fd, -1, &eof);
+        if (ret < 0) {
+            umqtt_error(cl, UMQTT_ERROR_IO, strerror(errno));
+            return;
+        }
+    }  
 
     if (eof) {
         umqtt_free(cl);
@@ -765,34 +830,37 @@ static void umqtt_io_write_cb(struct ev_loop *loop, struct ev_io *w, int revents
             return;
     }
 
-#if UMQTT_SSL_SUPPORT
-    if (unlikely(cl->state == UMQTT_STATE_SSL_HANDSHAKE)) {
-        ret = umqtt_ssl_handshake(cl->ssl);
-        if (ret == -1) {
-            umqtt_error(cl, UMQTT_ERROR_SSL_HANDSHAKE, "ssl handshake failed");
+    if (cl->ssl) {
+#ifdef SSL_SUPPORT
+        static char err_buf[128];
+        struct buffer *b = &cl->wb;
+
+        if (unlikely(cl->state == UMQTT_STATE_SSL_HANDSHAKE)) {
+            ret = ssl_negotiated(cl);
+            if (ret <= 0)
+                return;
+        }
+
+        ret = ssl_write(cl->ssl, buffer_data(b), buffer_length(b));
+        if (ret == SSL_ERROR) {
+            umqtt_log_err("ssl_write(%d): %s\n", ssl_err_code,
+                    ssl_strerror(ssl_err_code, err_buf, sizeof(err_buf)));
+            umqtt_error(cl, UMQTT_ERROR_IO, err_buf);
             return;
         }
 
-        if (ret == 1) {
-            cl->state = UMQTT_STATE_PARSE_FH;
-            if (cl->on_net_connected)
-                cl->on_net_connected(cl);
-        }
-        return;
-    }
-#endif
+        if (ret == SSL_PENDING)
+            return;
 
-#if UMQTT_SSL_SUPPORT
-    if (cl->ssl)
-        ret = buffer_pull_to_fd_ex(&cl->wb, w->fd, buffer_length(&cl->wb), umqtt_ssl_write, cl->ssl);
-    else
+        buffer_pull(b, NULL, ret);
 #endif
+    } else {
         ret = buffer_pull_to_fd(&cl->wb, w->fd, buffer_length(&cl->wb));
-
-    if (ret < 0) {
-        umqtt_error(cl, UMQTT_ERROR_IO, "write error");
-        return;
-    }
+        if (ret < 0) {
+            umqtt_error(cl, UMQTT_ERROR_IO, "write error");
+            return;
+        }
+    }   
 
     if (buffer_length(&cl->wb) < 1)
         ev_io_stop(loop, w);
@@ -827,8 +895,19 @@ int umqtt_init(struct umqtt_client *cl, struct ev_loop *loop, const char *host, 
     cl->start_time = ev_now(cl->loop);
 
     if (ssl) {
-#if (UMQTT_SSL_SUPPORT)
-        umqtt_ssl_init((struct umqtt_ssl_ctx **)&cl->ssl, cl->sock);
+#ifdef SSL_SUPPORT
+        if (!ssl_ctx) {
+            ssl_ctx = ssl_context_new(false);
+            if (!ssl_ctx) {
+                umqtt_log_err("SSL context init fail\n");
+                return -1;
+            }
+        }
+        cl->ssl = ssl_session_new(ssl_ctx, sock);
+        if (!cl->ssl) {
+            umqtt_log_err("SSL session init fail\n");
+            return -1;
+        }
 #else
         umqtt_log_err("SSL is not enabled at compile\n");
         umqtt_free(cl);

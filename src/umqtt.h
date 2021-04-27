@@ -144,6 +144,8 @@ struct umqtt_topic {
     uint8_t qos;
 };
 
+struct ssl_context;
+
 struct umqtt_client {
     int sock;
     struct ev_loop *loop;
@@ -152,7 +154,8 @@ struct umqtt_client {
     struct buffer rb;
     struct buffer wb;
     int state;
-    void *ssl;              /* Context wrap of openssl, wolfssl and mbedtls */
+
+    void *ssl;
 
     ev_tstamp start_time;   /* Time stamp of begin connect */
     ev_tstamp last_ping;    /* Time stamp of last ping */

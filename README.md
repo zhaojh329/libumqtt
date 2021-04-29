@@ -6,7 +6,7 @@
 [4]: https://github.com/zhaojh329/libumqtt/pulls
 [5]: https://img.shields.io/badge/Issues-welcome-brightgreen.svg?style=plastic
 [6]: https://github.com/zhaojh329/libumqtt/issues/new
-[7]: https://img.shields.io/badge/release-1.1.0-blue.svg?style=plastic
+[7]: https://img.shields.io/badge/release-1.1.1-blue.svg?style=plastic
 [8]: https://github.com/zhaojh329/libumqtt/releases
 [9]: https://github.com/zhaojh329/libumqtt/workflows/build/badge.svg
 

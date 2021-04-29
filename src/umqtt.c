@@ -74,8 +74,8 @@ static void umqtt_free(struct umqtt_client *cl)
     buffer_free(&cl->rb);
     buffer_free(&cl->wb);
 
-#if UMQTT_SSL_SUPPORT
-    umqtt_ssl_free(cl->ssl);
+#ifdef SSL_SUPPORT
+    ssl_session_free(cl->ssl);
 #endif
 
     if (cl->sock > 0)

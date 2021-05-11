@@ -866,6 +866,19 @@ static void umqtt_io_write_cb(struct ev_loop *loop, struct ev_io *w, int revents
         ev_io_stop(loop, w);
 }
 
+#ifdef SSL_SUPPORT
+#define SSL_CTX_CHECK                                       \
+    do {                                                    \
+        if (!ssl_ctx) {                                     \
+            ssl_ctx = ssl_context_new(false);               \
+            if (!ssl_ctx) {                                 \
+                umqtt_log_err("SSL context init fail\n");   \
+                return -1;                                  \
+            }                                               \
+        }                                                   \
+    } while (0)
+#endif
+
 int umqtt_init(struct umqtt_client *cl, struct ev_loop *loop, const char *host, int port, bool ssl)
 {
     int sock = -1;
@@ -896,13 +909,8 @@ int umqtt_init(struct umqtt_client *cl, struct ev_loop *loop, const char *host, 
 
     if (ssl) {
 #ifdef SSL_SUPPORT
-        if (!ssl_ctx) {
-            ssl_ctx = ssl_context_new(false);
-            if (!ssl_ctx) {
-                umqtt_log_err("SSL context init fail\n");
-                return -1;
-            }
-        }
+        SSL_CTX_CHECK;
+
         cl->ssl = ssl_session_new(ssl_ctx, sock);
         if (!cl->ssl) {
             umqtt_log_err("SSL session init fail\n");
@@ -944,3 +952,26 @@ struct umqtt_client *umqtt_new(struct ev_loop *loop, const char *host, int port,
 
     return cl;
 }
+
+#ifdef SSL_SUPPORT
+int umqtt_load_ca_crt_file(const char *file)
+{
+    SSL_CTX_CHECK;
+
+    return ssl_load_ca_crt_file(ssl_ctx, file);
+}
+
+int umqtt_load_crt_file(const char *file)
+{
+    SSL_CTX_CHECK;
+
+    return ssl_load_crt_file(ssl_ctx, file);
+}
+
+int umqtt_load_key_file(const char *file)
+{
+    SSL_CTX_CHECK;
+
+    return ssl_load_key_file(ssl_ctx, file);
+}
+#endif

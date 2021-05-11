@@ -190,4 +190,10 @@ struct umqtt_client {
 int umqtt_init(struct umqtt_client *cl, struct ev_loop *loop, const char *host, int port, bool ssl);
 struct umqtt_client *umqtt_new(struct ev_loop *loop, const char *host, int port, bool ssl);
 
+#ifdef SSL_SUPPORT
+int umqtt_load_ca_crt_file(const char *file);
+int umqtt_load_crt_file(const char *file);
+int umqtt_load_key_file(const char *file);
+#endif
+
 #endif

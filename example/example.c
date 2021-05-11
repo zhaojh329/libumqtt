@@ -183,6 +183,9 @@ static void usage(const char *prog)
         "      -p port      # Default is 1883\n"
         "      -i ClientId  # Default is 'libumqtt-Test\n"
         "      -s           # Use ssl\n"
+        "      -C           # CA certificate to verify peer against\n"
+        "      -c           # Certificate file to use\n"
+        "      -k           # Private key file to use\n"
         "      -u           # Username\n"
         "      -P           # Password\n"
         "      -a           # Auto reconnect to the server\n"
@@ -197,7 +200,7 @@ int main(int argc, char **argv)
     struct ev_signal signal_watcher;
     int opt;
 
-    while ((opt = getopt(argc, argv, "h:i:p:sau:P:d")) != -1) {
+    while ((opt = getopt(argc, argv, "h:i:p:sC:c:k:au:P:d")) != -1) {
         switch (opt) {
         case 'h':
             cfg.host = optarg;
@@ -205,9 +208,23 @@ int main(int argc, char **argv)
         case 'p':
             cfg.port = atoi(optarg);
             break;
+#ifdef SSL_SUPPORT
         case 's':
             cfg.ssl = true;
             break;
+        case 'C':
+            if (umqtt_load_ca_crt_file(optarg))
+                umqtt_log_err("load ca crt file fail\n");
+            break;
+        case 'c':
+            if (umqtt_load_crt_file(optarg))
+                umqtt_log_err("load crt file fail\n");
+            break;
+        case 'k':
+            if (umqtt_load_key_file(optarg))
+                umqtt_log_err("load key fail\n");
+            break;
+#endif
         case 'a':
             cfg.auto_reconnect = true;
             break;

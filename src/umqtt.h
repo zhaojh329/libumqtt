@@ -144,8 +144,6 @@ struct umqtt_topic {
     uint8_t qos;
 };
 
-struct ssl_context;
-
 struct umqtt_client {
     int sock;
     struct ev_loop *loop;

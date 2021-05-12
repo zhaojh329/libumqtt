@@ -10,7 +10,12 @@ option(UMQTT_LUA_SUPPORT "Enable build of Lua module" ${UMQTT_LUA_SUPPORT_DEFAUL
 
 if(UMQTT_LUA_SUPPORT)
     add_library(umqtt-lua MODULE umqtt_lua.c)
-    target_include_directories(umqtt-lua PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/buffer ${CMAKE_BINARY_DIR}/src ${LUA_INCLUDE_DIR})
+    target_include_directories(umqtt-lua PRIVATE
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/src/buffer
+        ${CMAKE_SOURCE_DIR}/src/log
+        ${CMAKE_BINARY_DIR}/src
+        ${LUA_INCLUDE_DIR})
     target_link_libraries(umqtt-lua PRIVATE umqtt)
     set_target_properties(umqtt-lua PROPERTIES OUTPUT_NAME umqtt PREFIX "")
 

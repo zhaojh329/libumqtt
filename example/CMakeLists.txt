@@ -7,6 +7,7 @@ endif()
 include_directories(
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/src/buffer
+    ${CMAKE_SOURCE_DIR}/src/log
     ${CMAKE_BINARY_DIR}/src
     ${LIBEV_INCLUDE_DIR})
 

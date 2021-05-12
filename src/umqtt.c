@@ -140,7 +140,7 @@ static void send_pub(struct umqtt_client *cl, uint8_t type, uint8_t flags, uint1
 
     ev_io_start(cl->loop, &cl->iow);
 
-    umqtt_log_debug("send %s: mid(%d)\n", umqtt_packet_type_to_string(type), mid);
+    log_debug("send %s: mid(%d)\n", umqtt_packet_type_to_string(type), mid);
 }
 
 static inline void send_puback(struct umqtt_client *cl, uint16_t mid)
@@ -168,7 +168,7 @@ static void handle_conack(struct umqtt_client *cl)
     bool sp = buffer_get_u8(rb, 0) & 0x01;    /* Session Present */
     int return_code =  buffer_get_u8(rb, 1);
 
-    umqtt_log_debug("Received CONACK: sp(%d), return_code(%d)\n", sp, return_code);
+    log_debug("Received CONACK: sp(%d), return_code(%d)\n", sp, return_code);
 
     if (cl->on_conack)
         cl->on_conack(cl, sp, return_code);
@@ -180,7 +180,7 @@ static void handle_pubackcomp(struct umqtt_client *cl)
 {
     uint16_t mid = ntohs(buffer_get_u16(&cl->rb, 0));
 
-    umqtt_log_debug("Received PUBACK: mid(%d)\n", mid);
+    log_debug("Received PUBACK: mid(%d)\n", mid);
 
     if (is_pending_message(cl, mid))
         free_mid(cl, mid);
@@ -190,7 +190,7 @@ static void handle_pubrec(struct umqtt_client *cl)
 {
     uint16_t mid = ntohs(buffer_get_u16(&cl->rb, 0));
 
-    umqtt_log_debug("Received PUBREC: mid(%d)\n", mid);
+    log_debug("Received PUBREC: mid(%d)\n", mid);
 
     send_pubrel(cl, mid);
 }
@@ -199,7 +199,7 @@ static void handle_pubrel(struct umqtt_client *cl)
 {
     uint16_t mid = ntohs(buffer_get_u16(&cl->rb, 0));
 
-    umqtt_log_debug("Received PUBREL: mid(%d)\n", mid);
+    log_debug("Received PUBREL: mid(%d)\n", mid);
 
     send_pubcomp(cl, mid);
 
@@ -214,11 +214,11 @@ static void handle_suback(struct umqtt_client *cl)
     uint16_t mid = ntohs(buffer_get_u16(rb, 0));
 
     if (!is_pending_message(cl, mid)) {
-        umqtt_log_err("Unknown 'suback' message due to unknown message id\n");
+        log_err("Unknown 'suback' message due to unknown message id\n");
         return;
     }
 
-    umqtt_log_debug("Received SUBACK: mid(%d)\n", mid);
+    log_debug("Received SUBACK: mid(%d)\n", mid);
 
     free_mid(cl, mid);
 
@@ -231,11 +231,11 @@ static void handle_unsuback(struct umqtt_client *cl)
     uint16_t mid = ntohs(buffer_get_u16(&cl->rb, 0));
 
     if (!is_pending_message(cl, mid)) {
-        umqtt_log_err("Unknown 'unsuback' message due to unknown message id\n");
+        log_err("Unknown 'unsuback' message due to unknown message id\n");
         return;
     }
 
-    umqtt_log_debug("Received UNSUBACK: mid(%d)\n", mid);
+    log_debug("Received UNSUBACK: mid(%d)\n", mid);
 
     free_mid(cl, mid);
 
@@ -265,7 +265,7 @@ static void handle_publish(struct umqtt_client *cl)
         mid = ntohs(buffer_get_u16(rb, 2 + topic_len));
 
         if (is_pending_message(cl, mid)) {
-            umqtt_log_err("Duplicate PUBLISH received:(q%d, m%d, '%.*s')\n", qos, mid, topic_len, topic);
+            log_err("Duplicate PUBLISH received:(q%d, m%d, '%.*s')\n", qos, mid, topic_len, topic);
             return;
         }
 
@@ -273,7 +273,7 @@ static void handle_publish(struct umqtt_client *cl)
         payload += 2;
     }
 
-    umqtt_log_debug("Received PUBLISH: %sqos(%d), mid(%d), '%s', (%d bytes)\n", dup ? "dup, " : "",
+    log_debug("Received PUBLISH: %sqos(%d), mid(%d), '%s', (%d bytes)\n", dup ? "dup, " : "",
             qos, mid, topic, payloadlen);
 
     if (cl->on_publish)
@@ -291,7 +291,7 @@ static void handle_pingresp(struct umqtt_client *cl)
 {
     cl->wait_pingresp = false;
 
-    umqtt_log_debug("Received PINGRESP\n");
+    log_debug("Received PINGRESP\n");
 
     if (cl->on_pingresp)
         cl->on_pingresp(cl);
@@ -363,7 +363,7 @@ static int umqtt_connect(struct umqtt_client *cl, struct umqtt_connect_opts *opt
     }
 
     if (remlen > UMQTT_MAX_REMLEN) {
-        umqtt_log_err("remaining length overflow\n");
+        log_err("remaining length overflow\n");
         return -1;
     }
 
@@ -403,7 +403,7 @@ int umqtt_subscribe(struct umqtt_client *cl, struct umqtt_topic *topics, int num
         remlen += 2 + strlen(topics[i].topic) + 1;
 
     if (remlen > UMQTT_MAX_REMLEN) {
-        umqtt_log_err("remaining length overflow\n");
+        log_err("remaining length overflow\n");
         return -1;
     }
 
@@ -434,7 +434,7 @@ int umqtt_unsubscribe(struct umqtt_client *cl, const char **topics, int num)
         remlen += 2 + strlen(topics[i]);
 
     if (remlen > UMQTT_MAX_REMLEN) {
-        umqtt_log_err("remaining length overflow\n");
+        log_err("remaining length overflow\n");
         return -1;
     }
 
@@ -466,7 +466,7 @@ static int __umqtt_publish(struct umqtt_client *cl, uint16_t mid,
         remlen += UMQTT_PKT_MID_LEN;
 
     if (remlen > UMQTT_MAX_REMLEN) {
-        umqtt_log_err("remaining length overflow\n");
+        log_err("remaining length overflow\n");
         return -1;
     }
 
@@ -482,7 +482,7 @@ static int __umqtt_publish(struct umqtt_client *cl, uint16_t mid,
 
     ev_io_start(cl->loop, &cl->iow);
 
-    umqtt_log_debug("send PUBLISH(%sq%d, m%d, '%s', (%d bytes)\n", dup ? "dup, " : "",
+    log_debug("send PUBLISH(%sq%d, m%d, '%s', (%d bytes)\n", dup ? "dup, " : "",
         qos, mid, topic, payloadlen);
 
     return 0;
@@ -517,7 +517,7 @@ static void umqtt_ping(struct umqtt_client *cl)
     buffer_put_data(&cl->wb, buf, 2);
     ev_io_start(cl->loop, &cl->iow);
 
-    umqtt_log_debug("Send: PINGREQ\n");
+    log_debug("Send: PINGREQ\n");
 }
 
 static void umqtt_timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents)
@@ -540,7 +540,7 @@ static void umqtt_timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents
             return;
 
         cl->wait_pingresp = false;
-        umqtt_log_err("ping timeout %d\n", ++cl->ntimeout);
+        log_err("ping timeout %d\n", ++cl->ntimeout);
         if (cl->ntimeout > 2) {
             umqtt_error(cl, UMQTT_ERROR_PING_TIMEOUT, "ping timeout");
             return;
@@ -730,7 +730,7 @@ static int check_socket_state(struct umqtt_client *cl)
 #ifdef SSL_SUPPORT
 static void on_ssl_verify_error(int error, const char *str, void *arg)
 {
-    umqtt_log_warn("SSL certificate error(%d): %s\n", error, str);
+    log_warn("SSL certificate error(%d): %s\n", error, str);
 }
 
 /* -1 error, 0 pending, 1 ok */
@@ -744,7 +744,7 @@ static int ssl_negotiated(struct umqtt_client *cl)
         return 0;
 
     if (ret == SSL_ERROR) {
-        umqtt_log_err("ssl connect error(%d): %s\n", ssl_err_code, ssl_strerror(ssl_err_code, err_buf, sizeof(err_buf)));
+        log_err("ssl connect error(%d): %s\n", ssl_err_code, ssl_strerror(ssl_err_code, err_buf, sizeof(err_buf)));
         umqtt_error(cl, UMQTT_ERROR_SSL_HANDSHAKE, err_buf);
         return -1;
     }
@@ -765,7 +765,7 @@ static int umqtt_ssl_read(int fd, void *buf, size_t count, void *arg)
 
     ret = ssl_read(cl->ssl, buf, count);
     if (ret == SSL_ERROR) {
-        umqtt_log_err("ssl_read(%d): %s\n", ssl_err_code,
+        log_err("ssl_read(%d): %s\n", ssl_err_code,
                 ssl_strerror(ssl_err_code, err_buf, sizeof(err_buf)));
         umqtt_error(cl, UMQTT_ERROR_IO, err_buf);
         return P_FD_ERR;
@@ -843,7 +843,7 @@ static void umqtt_io_write_cb(struct ev_loop *loop, struct ev_io *w, int revents
 
         ret = ssl_write(cl->ssl, buffer_data(b), buffer_length(b));
         if (ret == SSL_ERROR) {
-            umqtt_log_err("ssl_write(%d): %s\n", ssl_err_code,
+            log_err("ssl_write(%d): %s\n", ssl_err_code,
                     ssl_strerror(ssl_err_code, err_buf, sizeof(err_buf)));
             umqtt_error(cl, UMQTT_ERROR_IO, err_buf);
             return;
@@ -872,7 +872,7 @@ static void umqtt_io_write_cb(struct ev_loop *loop, struct ev_io *w, int revents
         if (!ssl_ctx) {                                     \
             ssl_ctx = ssl_context_new(false);               \
             if (!ssl_ctx) {                                 \
-                umqtt_log_err("SSL context init fail\n");   \
+                log_err("SSL context init fail\n");   \
                 return -1;                                  \
             }                                               \
         }                                                   \
@@ -888,10 +888,10 @@ int umqtt_init(struct umqtt_client *cl, struct ev_loop *loop, const char *host, 
 
     sock = tcp_connect(host, port, O_NONBLOCK | O_CLOEXEC, NULL, &eai);
     if (sock < 0) {
-        umqtt_log_err("tcp_connect failed: %s\n", strerror(errno));
+        log_err("tcp_connect failed: %s\n", strerror(errno));
         return -1;
     } else if (sock == 0) {
-        umqtt_log_err("tcp_connect failed: %s\n", gai_strerror(eai));
+        log_err("tcp_connect failed: %s\n", gai_strerror(eai));
         return -1;
     }
 
@@ -913,11 +913,11 @@ int umqtt_init(struct umqtt_client *cl, struct ev_loop *loop, const char *host, 
 
         cl->ssl = ssl_session_new(ssl_ctx, sock);
         if (!cl->ssl) {
-            umqtt_log_err("SSL session init fail\n");
+            log_err("SSL session init fail\n");
             return -1;
         }
 #else
-        umqtt_log_err("SSL is not enabled at compile\n");
+        log_err("SSL is not enabled at compile\n");
         umqtt_free(cl);
         return -1;
 #endif
@@ -941,7 +941,7 @@ struct umqtt_client *umqtt_new(struct ev_loop *loop, const char *host, int port,
 
     cl = malloc(sizeof(struct umqtt_client));
     if (!cl) {
-        umqtt_log_err("malloc failed: %s\n", strerror(errno));
+        log_err("malloc failed: %s\n", strerror(errno));
         return NULL;
     }
 

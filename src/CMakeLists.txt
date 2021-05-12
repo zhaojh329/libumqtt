@@ -4,7 +4,8 @@ set(UMQTT_VERSION_MINOR 1)
 set(UMQTT_VERSION_PATCH 1)
 
 aux_source_directory(. SOURCES)
-list(APPEND SOURCES buffer/buffer.c)
+aux_source_directory(log SOURCES)
+aux_source_directory(buffer SOURCES)
 
 if(BUILD_STATIC)
     if(SSL_SUPPORT)
@@ -28,7 +29,7 @@ else()
     set_target_properties(umqtt PROPERTIES VERSION ${UMQTT_VERSION_MAJOR}.${UMQTT_VERSION_MINOR}.${UMQTT_VERSION_PATCH})
 endif()
 
-target_include_directories(umqtt PRIVATE ${CMAKE_CURRENT_BINARY_DIR} ${LIBEV_INCLUDE_DIR} buffer)
+target_include_directories(umqtt PRIVATE ${CMAKE_CURRENT_BINARY_DIR} ${LIBEV_INCLUDE_DIR} buffer log)
 
 # configure a header file to pass some of the CMake settings to the source code
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
@@ -37,7 +38,7 @@ add_subdirectory(lua)
 
 install(
     FILES
-        log.h
+        log/log.h
         umqtt.h
         utils.h
         buffer/buffer.h

@@ -78,11 +78,11 @@ static void on_conack(struct umqtt_client *cl, bool sp, int code)
     };
 
     if (code != UMQTT_CONNECTION_ACCEPTED) {
-        umqtt_log_err("Connect failed:%d\n", code);
+        log_err("Connect failed:%d\n", code);
         return;
     }
 
-    umqtt_log_info("on_conack:  Session Present(%d)  code(%u)\n", sp, code);
+    log_info("on_conack:  Session Present(%d)  code(%u)\n", sp, code);
 
     /* Session Present */
     if (!sp)
@@ -103,8 +103,8 @@ static void on_suback(struct umqtt_client *cl, uint8_t *granted_qos, int qos_cou
 
 static void on_unsuback(struct umqtt_client *cl)
 {
-    umqtt_log_info("on_unsuback\n");
-    umqtt_log_info("Normal quit\n");
+    log_info("on_unsuback\n");
+    log_info("Normal quit\n");
 
     ev_break(cl->loop, EVBREAK_ALL);
 }
@@ -113,7 +113,7 @@ static void on_unsuback(struct umqtt_client *cl)
 static void on_publish(struct umqtt_client *cl, const char *topic, int topic_len,
     const void *payload, int payloadlen)
 {
-    umqtt_log_info("on_publish: topic:[%.*s] payload:[%.*s]\n", topic_len, topic,
+    log_info("on_publish: topic:[%.*s] payload:[%.*s]\n", topic_len, topic,
         payloadlen, (char *)payload);
 }
 
@@ -123,7 +123,7 @@ static void on_pingresp(struct umqtt_client *cl)
 
 static void on_error(struct umqtt_client *cl, int err, const char *msg)
 {
-    umqtt_log_err("on_error: %d: %s\n", err, msg);
+    log_err("on_error: %d: %s\n", err, msg);
 
     start_reconnect(cl->loop);
     free(cl);
@@ -131,7 +131,7 @@ static void on_error(struct umqtt_client *cl, int err, const char *msg)
 
 static void on_close(struct umqtt_client *cl)
 {
-    umqtt_log_info("on_close\n");
+    log_info("on_close\n");
 
     start_reconnect(cl->loop);
     free(cl);
@@ -139,10 +139,10 @@ static void on_close(struct umqtt_client *cl)
 
 static void on_net_connected(struct umqtt_client *cl)
 {
-    umqtt_log_info("on_net_connected\n");
+    log_info("on_net_connected\n");
 
     if (cl->connect(cl, &cfg.options) < 0) {
-        umqtt_log_err("connect failed\n");
+        log_err("connect failed\n");
 
         start_reconnect(cl->loop);
         free(cl);
@@ -168,7 +168,7 @@ static void do_connect(struct ev_loop *loop, struct ev_timer *w, int revents)
     cl->on_error = on_error;
     cl->on_close = on_close;
 
-    umqtt_log_info("Start connect...\n");
+    log_info("Start connect...\n");
 }
 
 static void signal_cb(struct ev_loop *loop, ev_signal *w, int revents)
@@ -214,15 +214,15 @@ int main(int argc, char **argv)
             break;
         case 'C':
             if (umqtt_load_ca_crt_file(optarg))
-                umqtt_log_err("load ca crt file fail\n");
+                log_err("load ca crt file fail\n");
             break;
         case 'c':
             if (umqtt_load_crt_file(optarg))
-                umqtt_log_err("load crt file fail\n");
+                log_err("load crt file fail\n");
             break;
         case 'k':
             if (umqtt_load_key_file(optarg))
-                umqtt_log_err("load key fail\n");
+                log_err("load key fail\n");
             break;
 #endif
         case 'a':
@@ -238,7 +238,7 @@ int main(int argc, char **argv)
             cfg.options.password = optarg;
             break;
         case 'd':
-            umqtt_log_threshold(LOG_DEBUG);
+            log_level(LOG_DEBUG);
             break;
         default: /* '?' */
             usage(argv[0]);
@@ -254,7 +254,7 @@ int main(int argc, char **argv)
     ev_timer_init(&reconnect_timer, do_connect, 0.1, 0.0);
     ev_timer_start(loop, &reconnect_timer);
 
-    umqtt_log_info("libumqttc version %s\n", UMQTT_VERSION_STRING);
+    log_info("libumqttc version %s\n", UMQTT_VERSION_STRING);
 
     ev_run(loop, 0);
     

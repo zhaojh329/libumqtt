@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "umqtt.h"
 
@@ -125,6 +126,8 @@ static void on_error(struct umqtt_client *cl, int err, const char *msg)
 {
     log_err("on_error: %d: %s\n", err, msg);
 
+    reconnect_timer.data = NULL;
+
     start_reconnect(cl->loop);
     free(cl);
 }
@@ -132,6 +135,8 @@ static void on_error(struct umqtt_client *cl, int err, const char *msg)
 static void on_close(struct umqtt_client *cl)
 {
     log_info("on_close\n");
+
+    reconnect_timer.data = NULL;
 
     start_reconnect(cl->loop);
     free(cl);
@@ -143,6 +148,8 @@ static void on_net_connected(struct umqtt_client *cl)
 
     if (cl->connect(cl, &cfg.options) < 0) {
         log_err("connect failed\n");
+
+        reconnect_timer.data = NULL;
 
         start_reconnect(cl->loop);
         free(cl);
@@ -168,11 +175,19 @@ static void do_connect(struct ev_loop *loop, struct ev_timer *w, int revents)
     cl->on_error = on_error;
     cl->on_close = on_close;
 
+    reconnect_timer.data = cl;
+
     log_info("Start connect...\n");
 }
 
 static void signal_cb(struct ev_loop *loop, ev_signal *w, int revents)
 {
+    struct umqtt_client *cl = reconnect_timer.data;
+
+    if (cl) {
+        cl->free(cl);
+        free(cl);
+    }
     ev_break(loop, EVBREAK_ALL);
 }
 
@@ -198,6 +213,7 @@ int main(int argc, char **argv)
 {
     struct ev_loop *loop = EV_DEFAULT;
     struct ev_signal signal_watcher;
+    char client_id[128] = "";
     int opt;
 
     while ((opt = getopt(argc, argv, "h:i:p:sC:c:k:au:P:d")) != -1) {
@@ -245,8 +261,11 @@ int main(int argc, char **argv)
         }
     }
 
-    if (!cfg.options.client_id)
-        cfg.options.client_id = "libumqtt-Test";
+    if (!cfg.options.client_id) {
+        srand(time(NULL));
+        sprintf(client_id, "libumqtt-Test-%05d", rand());
+        cfg.options.client_id = client_id;
+    }
 
     ev_signal_init(&signal_watcher, signal_cb, SIGINT);
     ev_signal_start(loop, &signal_watcher);
@@ -259,7 +278,7 @@ int main(int argc, char **argv)
     ev_run(loop, 0);
 
     ev_default_destroy();
-    
+
     return 0;
 }
 

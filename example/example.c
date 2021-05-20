@@ -257,6 +257,8 @@ int main(int argc, char **argv)
     log_info("libumqttc version %s\n", UMQTT_VERSION_STRING);
 
     ev_run(loop, 0);
+
+    ev_default_destroy();
     
     return 0;
 }

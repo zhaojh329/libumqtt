@@ -246,8 +246,8 @@ static void handle_unsuback(struct umqtt_client *cl)
 static void handle_publish(struct umqtt_client *cl)
 {
     struct umqtt_packet *pkt = &cl->pkt;
-    uint8_t qos = (pkt->flags > 1) & 0x03;
-    bool dup = (pkt->flags > 3) & 0x1;
+    uint8_t qos = (pkt->flags >> 1) & 0x03;
+    bool dup = (pkt->flags >> 3) & 0x1;
     struct buffer *rb = &cl->rb;
     uint16_t mid = 0;
     int payloadlen;

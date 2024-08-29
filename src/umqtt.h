@@ -134,7 +134,8 @@ struct umqtt_connect_opts {
     const char *password;
 
     const char *will_topic;
-    const char *will_message;
+    const void *will_message;
+    size_t will_message_len;
     uint8_t will_qos;
     bool will_retain;
 };
